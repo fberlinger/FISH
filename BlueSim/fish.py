@@ -137,30 +137,28 @@ class Fish():
         long as the fish `is_started`.
         """
 
-        if not self.is_started:
-            return
+        while self.is_started:
 
-        start_time = time.time()
-        self.eval()
-        time_elapsed = time.time() - start_time
+            start_time = time.time()
+            self.eval()
+            time_elapsed = time.time() - start_time
 
-        sleep_time = (self.clock_speed / 2) - time_elapsed
+            sleep_time = (self.clock_speed / 2) - time_elapsed
 
-        # print(time_elapsed, sleep_time, self.clock_speed / 2)
-        time.sleep(max(0, sleep_time))
-        if sleep_time < 0 and self.verbose:
-            print('Warning frequency too high or computer too slow')
+            # print(time_elapsed, sleep_time, self.clock_speed / 2)
+            time.sleep(max(0, sleep_time))
+            if sleep_time < 0 and self.verbose:
+                print('Warning frequency too high or computer too slow')
 
-        start_time = time.time()
-        self.communicate()
-        time_elapsed = time.time() - start_time
+            start_time = time.time()
+            self.communicate()
+            time_elapsed = time.time() - start_time
 
-        sleep_time = (self.clock_speed / 2) - time_elapsed
-        time.sleep(max(0, sleep_time))
-        if sleep_time < 0 and self.verbose:
-            print('Warning frequency too high or computer too slow')
+            sleep_time = (self.clock_speed / 2) - time_elapsed
+            time.sleep(max(0, sleep_time))
+            if sleep_time < 0 and self.verbose:
+                print('Warning frequency too high or computer too slow')
 
-        self.run()
 
     def move_handler(self, event):
         """Handle move events, i.e., update the target position.
