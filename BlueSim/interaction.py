@@ -29,7 +29,7 @@ class Interaction():
         Arguments:
             source_id {int} -- Index of the fish that wants to know its
                 location
-            pos {np.array} -- X and Y position of the object
+            pos {np.array} -- X, Y, and Z position of the object
         """
 
         return pos - self.environment.node_pos[source_id]
@@ -46,7 +46,7 @@ class Interaction():
 
         if source_id == target_id:
             # You are very close to yourself!
-            return np.zeros((2,))
+            return np.zeros((3,))
 
         prob = self.environment.prob(source_id, target_id)
 
@@ -60,7 +60,7 @@ class Interaction():
         if success:
             return self.environment.get_rel_pos(source_id, target_id)
         else:
-            return np.zeros((2,))
+            return np.zeros((3,))
 
     def move(self, source_id, target_direction):
         """Move a fish

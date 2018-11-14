@@ -19,7 +19,7 @@ class Fish():
     neighbors and takes actions accordingly. In taking actions, the fish can
     weight information from neighbors based on their distance. The fish aims to
     stay between a lower and upper limit of neighbors to maintain a cohesive
-    collective. It can moves at a maximal speed and updates its behavior on
+    collective. It can move at a maximal speed and updates its behavior on
     every clock tick.
     """
 
@@ -71,7 +71,7 @@ class Fish():
         self.clock_speed = 1 / self.clock_freq
         self.clock = 0
         self.queue = Queue()
-        self.target_pos = np.zeros((2,))
+        self.target_pos = np.zeros((3,))
         self.is_started = False
         self.neighbors = set()
 
@@ -164,10 +164,11 @@ class Fish():
         """Handle move events, i.e., update the target position.
 
         Arguments:
-            event {Move} -- Event holding an x and y target position
+            event {Move} -- Event holding an x, y, and z target position
         """
         self.target_pos[0] = event.x
         self.target_pos[1] = event.y
+        self.target_pos[2] = event.z
 
     def ping_handler(self, neighbors, rel_pos, event):
         """Handle ping events
@@ -382,9 +383,9 @@ class Fish():
                 neighboring fish.
 
         Returns:
-            np.array -- 2D centroid
+            np.array -- 3D centroid
         """
-        center = np.zeros((2,))
+        center = np.zeros((3,))
         n = max(1, len(rel_pos))
 
         for key, value in rel_pos.items():
@@ -410,11 +411,11 @@ class Fish():
             rel_pos {dict} -- Relative positions to all neighbors
 
         Returns:
-            np.array -- Move direction as a 2D vector
+            np.array -- Move direction as a 3D vector
         """
         n = len(neighbors)
         # Get the centroid of the swarm
-        centroid_pos = np.zeros((2,))
+        centroid_pos = np.zeros((3,))
 
         if n < self.lim_neighbors[0]:
             # Get the relative direction to the centroid of the swarm

@@ -80,10 +80,10 @@ class Environment():
 
         # Simulate random noise in [-1,1]
         noise = (
-            np.random.rand(2,) * 2 - np.ones((2,))
+            np.random.rand(3,) * 2 - np.ones((3,))
         ) * self.noise_magnitude
 
-        return target_pos + self.distortion[indices[0], indices[1]] + noise
+        return target_pos + self.distortion[indices[0], indices[1], indices[2]] + noise
 
     def set_pos(self, source_index, new_pos):
         """Set the new position
@@ -92,7 +92,7 @@ class Environment():
 
         Arguments:
             source_index {int} -- Index of the node position to be set
-            new_pos {np.array} -- New node position ([x, y]) to be set.
+            new_pos {np.array} -- New node position ([x, y, z]) to be set.
         """
 
         self.node_pos[source_index] = new_pos

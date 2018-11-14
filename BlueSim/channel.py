@@ -43,7 +43,7 @@ class Channel():
         """
         self.observer = observer
 
-    def transmit(self, source, event, pos=np.zeros((2,)), is_observer=False):
+    def transmit(self, source, event, pos=np.zeros((3,)), is_observer=False):
         """Transmit a broadcasted event to node instances
 
         This method gets the probability of connectedness between two nodes
