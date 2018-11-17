@@ -380,6 +380,15 @@ class Observer():
         """Plot the fish movement
         """
         ax = plt.gca(projection='3d')
+        ax.set_xlim3d(0, 178)
+        ax.set_ylim3d(0, 178)
+        ax.set_zlim3d(0, 117)
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+        ax.set_zlabel('Z axis')
+        ax.invert_yaxis()
+        ax.invert_zaxis()
+        ax.text(0, 0, 0, "origin", color='red')
 
         if self.is_instructed and not no_star:
             ax.scatter(
@@ -393,12 +402,13 @@ class Observer():
                 alpha=0.5
             )
 
+        # connection lines, no scatter here!
         for i in range(self.num_nodes):
             c = self.node_colors[i]
             if i != 0 and not i % 20 and dark:
                 c = [1.0, 1.0, 1.0, 1.0]
 
-            ax.scatter(
+            ax.plot(
                 self.x[i],
                 self.y[i],
                 self.z[i],

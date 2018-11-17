@@ -58,6 +58,11 @@ class Environment():
         self.prob_type = prob_type
 
         # Init
+        # restrict to tank
+        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, 177)
+        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, 177)
+        self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, 116)
+
         self.num_nodes = node_pos.size
         self.update_distance()
 
@@ -109,7 +114,7 @@ class Environment():
 
         Calculate and saves the pairwise distance of every node.
         """
-        self.node_dist = cdist(self.node_pos, self.node_pos)
+        self.node_dist = cdist(self.node_pos, self.node_pos, 'cityblock') #xx 3D manhattan distance
 
     def prob(self, node_a_index, node_b_index):
         """Calculate the probability of connectivity of two points based on

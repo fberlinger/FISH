@@ -13,7 +13,7 @@ from fish import Fish
 from observer import Observer
 
 
-def generate_distortion(type='linear', n=10, show=False):
+def generate_distortion(type='linear', magnitude=1, n=10, show=False):
     """Generates a distortion model represented as a vector field
     """
 
@@ -48,10 +48,10 @@ def generate_distortion(type='linear', n=10, show=False):
         Y_new = X-(n-1)/2
         Z_new = 0
 
-    unit_magnitude = 1/(np.sqrt(X_new**2 + Y_new**2 + Z_new**2))
-    distortion[:, :, :, 0] = unit_magnitude * X_new
-    distortion[:, :, :, 1] = unit_magnitude * Y_new
-    distortion[:, :, :, 2] = unit_magnitude * Z_new
+    norm_magnitude = magnitude/(np.sqrt(X_new**2 + Y_new**2 + Z_new**2))
+    distortion[:, :, :, 0] = norm_magnitude * X_new
+    distortion[:, :, :, 1] = norm_magnitude * Y_new
+    distortion[:, :, :, 2] = norm_magnitude * Z_new
 
     if show:
         fig = plt.figure()

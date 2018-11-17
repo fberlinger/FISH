@@ -423,9 +423,9 @@ class Fish():
         elif n > self.lim_neighbors[1]:
             # Get the inverse relative direction to centroid of the swarm
             centroid_pos = -self.comp_center(rel_pos)
-            # Adjust length
-            magnitude = np.linalg.norm(centroid_pos)
-            centroid_pos /= magnitude**2
+            # Adjust length #xx change
+            #magnitude = np.linalg.norm(centroid_pos)
+            #centroid_pos /= magnitude**2
 
         move = self.target_pos + centroid_pos
 
