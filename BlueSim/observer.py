@@ -398,7 +398,7 @@ class Observer():
             if i != 0 and not i % 20 and dark:
                 c = [1.0, 1.0, 1.0, 1.0]
 
-            ax.plot( #xx might need a scatter here
+            ax.scatter(
                 self.x[i],
                 self.y[i],
                 self.z[i],
