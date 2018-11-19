@@ -3,7 +3,7 @@ import numpy as np
 from queue import Queue
 import time
 import datetime
-
+import pandas as pd 
 from events import HopCount, Ping, InfoInternal, LeaderElection
 from eventcodes import (
     PING, HOMING, HOP_COUNT, INFO_EXTERNAL, INFO_INTERNAL, START_HOP_COUNT,
@@ -137,30 +137,26 @@ class Fish():
         long as the fish `is_started`.
         """
 
-        if not self.is_started:
-            return
+        while self.is_started:
+            start_time = time.time()
+            self.eval()
+            time_elapsed = time.time() - start_time
 
-        start_time = time.time()
-        self.eval()
-        time_elapsed = time.time() - start_time
+            sleep_time = (self.clock_speed / 2) - time_elapsed
 
-        sleep_time = (self.clock_speed / 2) - time_elapsed
+            # print(time_elapsed, sleep_time, self.clock_speed / 2)
+            time.sleep(max(0, sleep_time))
+            if sleep_time < 0 and self.verbose:
+                print('Warning frequency too high or computer too slow')
 
-        # print(time_elapsed, sleep_time, self.clock_speed / 2)
-        time.sleep(max(0, sleep_time))
-        if sleep_time < 0 and self.verbose:
-            print('Warning frequency too high or computer too slow')
+            start_time = time.time()
+            self.communicate()
+            time_elapsed = time.time() - start_time
 
-        start_time = time.time()
-        self.communicate()
-        time_elapsed = time.time() - start_time
-
-        sleep_time = (self.clock_speed / 2) - time_elapsed
-        time.sleep(max(0, sleep_time))
-        if sleep_time < 0 and self.verbose:
-            print('Warning frequency too high or computer too slow')
-
-        self.run()
+            sleep_time = (self.clock_speed / 2) - time_elapsed
+            time.sleep(max(0, sleep_time))
+            if sleep_time < 0 and self.verbose:
+                print('Warning frequency too high or computer too slow')
 
     def move_handler(self, event):
         """Handle move events, i.e., update the target position.
@@ -434,13 +430,66 @@ class Fish():
         magnitude = np.linalg.norm(move)
         if magnitude == 0:
             magnitude = 1
-        direction = move / magnitude
-        final_move = direction * min(magnitude, self.fish_max_speed)
-
+        
+        
+        magnitude = np.sqrt(move[0]**2 + move[1]**2)
+        #direction = move / magnitude
+        #final_move = direction * min(magnitude, self.fish_max_speed)
         if self.verbose:
             print('Fish #{}: move to {}'.format(self.id, final_move))
-
+        final_move =self.move_formation(neighbors,rel_pos)
         return final_move
+
+    def move_formation(self,neighbors,rel_pos):
+        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
+        r = np.sqrt(2)
+        d = .6
+        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
+        i = df[(df['Y'] > 0 )& (df['X'] > 0)]
+        ii = df[(df['Y'] > 0 )& (df['X'] < 0)]
+        iii= df[(df['Y'] < 0) & (df['X'] < 0)]
+        iv = df[(df['Y'] < 0) & (df['X'] > 0)]
+
+        xr=xl=yl=yr =0.0
+        step_size = 0.5
+        quadrants = [i,ii,iii,iv]
+        x = []
+        y = []
+        for q in quadrants: 
+            q.sort_values(['dist'])
+            if(len(q)>0):
+                x.append(q['X'].values[0]-d)
+                y.append(q['Y'].values[0]-d)
+        #neig_clique.append([q['X'].values[0]-d,q['Y'].values[0]-d])
+            else:
+                x.append(0)
+                y.append(0)
+        #neig_clique.append([0,0])  
+        dx=dy=0
+        if(x[0]==0):
+            dx = x[1]
+        elif(x[1]==0):
+            dx = x[0]
+        else: 
+            dx= (x[0]+ x[1])/2
+        if(y[0]==0):
+            dy = y[1]
+        elif(y[1]==0):
+            dy = y[0]
+        else:
+            dy= (y[0] + y[1])/2
+        
+        if(dy>d):
+            dy = d
+        elif(dy!=0):
+            dy=-d
+        if(dx>d):
+            dx = d
+        elif(dx!=0):
+            dx=-d
+        final_move = [dx,dy]
+        return final_move
+
 
     def update_behavior(self):
         """Update the fish behavior.
