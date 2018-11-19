@@ -3,7 +3,9 @@ from queue import Queue, PriorityQueue
 import time
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-
+import matplotlib.animation as animation
+from matplotlib import rc
+from IPython.display import HTML
 from eventcodes import (
     INFO_EXTERNAL, INFO_INTERNAL, START_HOP_COUNT, HOP_COUNT,
     START_LEADER_ELECTION, LEADER_ELECTION
@@ -185,20 +187,17 @@ class Observer():
         long as the fish `is_started`.
         """
 
-        if not self.is_started:
-            return
+        while self.is_started:
+            
+            time.sleep(self.clock_speed / 2)
 
-        time.sleep(self.clock_speed / 2)
+            start_time = time.time()
 
-        start_time = time.time()
+            self.eval()
 
-        self.eval()
-
-        time_elapsed = time.time() - start_time
-        sleep_time = (self.clock_speed / 2) - time_elapsed
-        time.sleep(max(0, sleep_time))
-
-        self.run()
+            time_elapsed = time.time() - start_time
+            sleep_time = (self.clock_speed / 2) - time_elapsed
+            time.sleep(max(0, sleep_time))
 
     def activate_reset(self):
         """Activate automatic resetting of the fish positions on a new
@@ -371,6 +370,32 @@ class Observer():
 
         self.clock += 1
 
+    def animate_plot(self):
+        plt.ion()
+        fig = plt.figure(1)
+        ax = plt.axes(xlim=(0, 20), ylim=(0, 20))
+        ax.set_xlabel('x')
+        ax.set_ylabel('y')
+        N = self.num_nodes
+        fish = ax.plot( *([[], []]*N), marker=">",markersize =15,alpha = 1)
+        
+        def init():    
+            for line in fish:
+                line.set_data([4], [4])
+            return fish
+
+        def animate(i):
+            for j in range(self.num_nodes): 
+                fish[j].set_data(self.x[j][i],self.y[j][i])
+                fish[j].set_markersize(i)
+            return fish
+
+        anim = animation.FuncAnimation(fig, animate, init_func=init,
+                               frames=10, interval=100, blit=True)
+
+
+
+
     def plot(
         self,
         dark=False,
@@ -379,8 +404,11 @@ class Observer():
         show_bar_chart=False,
         no_star=False
     ):
+        
         """Plot the fish movement
         """
+
+        fig = plt.figure(2)
         ax = plt.gca()
 
         if self.is_instructed and not no_star:
@@ -398,15 +426,13 @@ class Observer():
             c = self.node_colors[i]
             if i != 0 and not i % 20 and dark:
                 c = [1.0, 1.0, 1.0, 1.0]
-
             plt.plot(
                 self.x[i],
                 self.y[i],
                 c=c,
-                linewidth=4.0,
+                linewidth=2.0,
                 alpha=0.66
             )
-
             if len(self.status[i]) < 100:
                 for j in range(1, len(self.status[i])-1):
                     face = c
@@ -443,6 +469,8 @@ class Observer():
                 s=50,
                 alpha=1
             )
+            print("Show plot")
+            plt.show()
 
         leg = []
         for i in range(self.num_nodes):
