@@ -5,7 +5,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import rc
-from IPython.display import HTML
+#from IPython.display import HTML
 from eventcodes import (
     INFO_EXTERNAL, INFO_INTERNAL, START_HOP_COUNT, HOP_COUNT,
     START_LEADER_ELECTION, LEADER_ELECTION
@@ -385,15 +385,32 @@ class Observer():
             return fish
 
         def animate(i):
-            for j in range(self.num_nodes): 
+            for j in range(N): 
                 fish[j].set_data(self.x[j][i],self.y[j][i])
                 fish[j].set_markersize(i)
             return fish
 
         anim = animation.FuncAnimation(fig, animate, init_func=init,
                                frames=10, interval=100, blit=True)
+        plt.show()
 
-
+    def time_plot(self):
+        fig = plt.figure(2)
+        ax = plt.gca()
+        fish_over_time = []
+        for time in range(len(self.x[0])):
+            fish_x = []
+            fish_y = []
+            for i in range(self.num_nodes):
+                fish_x.append(self.x[i][time])
+                fish_y.append(self.y[i][time])
+            fish_over_time.append((fish_x, fish_y))
+        for xs, ys in fish_over_time:
+            plt.figure()
+            plt.scatter(xs, ys)
+        plt.show()
+       
+       
 
 
     def plot(
@@ -469,7 +486,6 @@ class Observer():
                 s=50,
                 alpha=1
             )
-            print("Show plot")
             plt.show()
 
         leg = []

@@ -441,7 +441,7 @@ class Fish():
         return final_move
 
     def move_formation(self,neighbors,rel_pos):
-        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
+        df = pd.DataFrame.from_dict(rel_pos, orient = 'index', columns=['X', 'Y'])
         r = np.sqrt(2)
         d = .6
         df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
