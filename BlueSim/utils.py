@@ -3,6 +3,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import threading
 
 from channel import Channel
@@ -12,42 +13,50 @@ from fish import Fish
 from observer import Observer
 
 
-def generate_distortion(type='linear', n=10, show=False):
+def generate_distortion(type='linear', magnitude=1, n=10, show=False):
     """Generates a distortion model represented as a vector field
     """
 
-    X, Y = np.mgrid[0:n, 0:n]
-    distortion = np.zeros((n, n, 2))
+    X, Y, Z = np.mgrid[0:n, 0:n, 0:n]
+    distortion = np.zeros((n, n, n, 3))
 
     if type == 'none':
-        distortion[:, :, 0] = 0
-        distortion[:, :, 1] = 0
+        distortion[:, :, :, 0] = 0
+        distortion[:, :, :, 1] = 0
+        distortion[:, :, :, 2] = 0
         return distortion
 
     elif type == 'linear':
         X_new = 1
         Y_new = 0
+        Z_new = 0
 
     elif type == 'aggregation':
         theta = np.arctan2(Y-(n-1)/2, X-(n-1)/2)
         X_new = -np.cos(theta)
         Y_new = -np.sin(theta)
+        Z_new = 0
 
     elif type == 'dispersion':
         theta = np.arctan2(Y-(n-1)/2, X-(n-1)/2)
         X_new = np.cos(theta)
         Y_new = np.sin(theta)
+        Z_new = 0
 
     elif type == 'curl':
         X_new = -(Y-(n-1)/2)
         Y_new = X-(n-1)/2
+        Z_new = 0
 
-    unit_magnitude = 1/(np.sqrt(X_new**2 + Y_new**2))
-    distortion[:, :, 0] = unit_magnitude * X_new
-    distortion[:, :, 1] = unit_magnitude * Y_new
+    norm_magnitude = magnitude/(np.sqrt(X_new**2 + Y_new**2 + Z_new**2))
+    distortion[:, :, :, 0] = norm_magnitude * X_new
+    distortion[:, :, :, 1] = norm_magnitude * Y_new
+    distortion[:, :, :, 2] = norm_magnitude * Z_new
 
     if show:
-        plt.quiver(X, Y, distortion[:, :, 0], distortion[:, :, 1])
+        fig = plt.figure()
+        ax = fig.gca(projection='3d')
+        ax.quiver(X, Y, Z, distortion[:, :, :, 0], distortion[:, :, :, 1], distortion[:, :, :, 2])
         plt.show()
 
     return distortion

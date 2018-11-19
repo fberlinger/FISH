@@ -38,17 +38,19 @@ class Move():
     """Make the fish move to a target direction
     """
 
-    def __init__(self, x=0, y=0):
+    def __init__(self, x=0, y=0, z=0):
         """External event to make fish start moving into a target direction
 
         Keyword Arguments:
             x {number} -- X target position (default: {0})
             y {number} -- Y target position (default: {0})
+            z {number} -- Z target position (default: {0})
         """
 
         self.opcode = MOVE
         self.x = x
         self.y = y
+        self.z = z
 
 
 class HopCount():

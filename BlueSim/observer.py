@@ -66,7 +66,7 @@ class Observer():
         self.fish = fish
         self.channel = channel
         self.clock_freq = clock_freq
-        self.object = np.zeros((2, 1))
+        self.object = np.zeros((3, 1))
         self.fish_pos = fish_pos
 
         self.clock_speed = 1 / self.clock_freq
@@ -75,6 +75,7 @@ class Observer():
         self.num_nodes = self.environment.node_pos.shape[0]
         self.x = []
         self.y = []
+        self.z = []
         self.c = []
         self.status = []
         self.reset = False
@@ -85,6 +86,7 @@ class Observer():
             self.node_colors.append(colors[ii])
             self.x.append([])
             self.y.append([])
+            self.z.append([])
             self.status.append([])
 
         self.is_started = False
@@ -118,7 +120,7 @@ class Observer():
         event,
         rel_clock=0,
         fish_id=None,
-        pos=np.zeros(2,),
+        pos=np.zeros(3,),
         fish_all=False
     ):
         """Make the observer instruct the fish swarm.
@@ -184,21 +186,16 @@ class Observer():
         This method simulates the fish and calls `eval` on every clock tick as
         long as the fish `is_started`.
         """
+        while self.is_started:
+            time.sleep(self.clock_speed / 2)
 
-        if not self.is_started:
-            return
+            start_time = time.time()
 
-        time.sleep(self.clock_speed / 2)
+            self.eval()
 
-        start_time = time.time()
-
-        self.eval()
-
-        time_elapsed = time.time() - start_time
-        sleep_time = (self.clock_speed / 2) - time_elapsed
-        time.sleep(max(0, sleep_time))
-
-        self.run()
+            time_elapsed = time.time() - start_time
+            sleep_time = (self.clock_speed / 2) - time_elapsed
+            time.sleep(max(0, sleep_time))
 
     def activate_reset(self):
         """Activate automatic resetting of the fish positions on a new
@@ -359,6 +356,7 @@ class Observer():
         for i in range(self.num_nodes):
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
+            self.z[i].append(self.environment.node_pos[i, 2])
 
             n = len(self.fish[i].neighbors)
 
@@ -381,12 +379,22 @@ class Observer():
     ):
         """Plot the fish movement
         """
-        ax = plt.gca()
+        ax = plt.gca(projection='3d')
+        ax.set_xlim3d(0, 178)
+        ax.set_ylim3d(0, 178)
+        ax.set_zlim3d(0, 117)
+        ax.set_xlabel('X axis')
+        ax.set_ylabel('Y axis')
+        ax.set_zlabel('Z axis')
+        ax.invert_yaxis()
+        ax.invert_zaxis()
+        ax.text(0, 0, 0, "origin", color='red')
 
         if self.is_instructed and not no_star:
-            plt.scatter(
+            ax.scatter(
                 self.object[0],
                 self.object[1],
+                self.object[2],
                 marker=(5, 1, 0),
                 facecolors='white',
                 edgecolors='white',
@@ -394,14 +402,16 @@ class Observer():
                 alpha=0.5
             )
 
+        # connection lines, no scatter here!
         for i in range(self.num_nodes):
             c = self.node_colors[i]
             if i != 0 and not i % 20 and dark:
                 c = [1.0, 1.0, 1.0, 1.0]
 
-            plt.plot(
+            ax.plot(
                 self.x[i],
                 self.y[i],
+                self.z[i],
                 c=c,
                 linewidth=4.0,
                 alpha=0.66
@@ -417,9 +427,10 @@ class Observer():
                         marker = 'o'
                         face = 'black' if self.status[i][j] == -1 else c
 
-                    plt.scatter(
+                    ax.scatter(
                         self.x[i][j],
                         self.y[i][j],
+                        self.z[i][j],
                         marker=marker,
                         facecolors=face,
                         edgecolors=edge,
@@ -427,17 +438,19 @@ class Observer():
                         alpha=1
                     )
 
-            plt.scatter(
+            ax.scatter(
                 self.x[i][0],
                 self.y[i][0],
+                self.z[i][0],
                 c=c,
                 marker='>',
                 s=200,
                 alpha=1
             )
-            plt.scatter(
+            ax.scatter(
                 self.x[i][-1],
                 self.y[i][-1],
+                self.z[i][-1],
                 c=c,
                 marker='s',
                 s=50,
@@ -464,6 +477,7 @@ class Observer():
                 ax.spines['left'].set_color('white')
                 ax.tick_params(axis='x', colors='white')
                 ax.tick_params(axis='y', colors='white')
+                ax.tick_params(axis='z', colors='white') #xx maybe?
                 ax.yaxis.label.set_color('white')
                 ax.xaxis.label.set_color('white')
                 ax.title.set_color('white')

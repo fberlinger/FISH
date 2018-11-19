@@ -58,6 +58,11 @@ class Environment():
         self.prob_type = prob_type
 
         # Init
+        # restrict to tank
+        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, 177)
+        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, 177)
+        self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, 116)
+
         self.num_nodes = node_pos.size
         self.update_distance()
 
@@ -80,10 +85,10 @@ class Environment():
 
         # Simulate random noise in [-1,1]
         noise = (
-            np.random.rand(2,) * 2 - np.ones((2,))
+            np.random.rand(3,) * 2 - np.ones((3,))
         ) * self.noise_magnitude
 
-        return target_pos + self.distortion[indices[0], indices[1]] + noise
+        return target_pos + self.distortion[indices[0], indices[1], indices[2]] + noise
 
     def set_pos(self, source_index, new_pos):
         """Set the new position
@@ -92,7 +97,7 @@ class Environment():
 
         Arguments:
             source_index {int} -- Index of the node position to be set
-            new_pos {np.array} -- New node position ([x, y]) to be set.
+            new_pos {np.array} -- New node position ([x, y, z]) to be set.
         """
 
         self.node_pos[source_index] = new_pos
@@ -109,7 +114,7 @@ class Environment():
 
         Calculate and saves the pairwise distance of every node.
         """
-        self.node_dist = cdist(self.node_pos, self.node_pos)
+        self.node_dist = cdist(self.node_pos, self.node_pos, 'cityblock') #xx 3D manhattan distance
 
     def prob(self, node_a_index, node_b_index):
         """Calculate the probability of connectivity of two points based on
