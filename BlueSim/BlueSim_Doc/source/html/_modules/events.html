@@ -1,0 +1,249 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>events &#8212; BlueSim 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">BlueSim 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for events</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">eventcodes</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">INFO_EXTERNAL</span><span class="p">,</span> <span class="n">INFO_INTERNAL</span><span class="p">,</span> <span class="n">PING</span><span class="p">,</span> <span class="n">HOMING</span><span class="p">,</span> <span class="n">HOP_COUNT</span><span class="p">,</span> <span class="n">START_HOP_COUNT</span><span class="p">,</span>
+    <span class="n">MOVE</span><span class="p">,</span> <span class="n">LEADER_ELECTION</span><span class="p">,</span> <span class="n">START_LEADER_ELECTION</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="Ping"><a class="viewcode-back" href="../index.html#events.Ping">[docs]</a><span class="k">class</span> <span class="nc">Ping</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Ping your beloved neighbor fish</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a ping event to &quot;sense&quot; other fish</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            id {int} -- ID of the fish that spreads this event.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">PING</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_id</span> <span class="o">=</span> <span class="nb">id</span></div>
+
+
+<div class="viewcode-block" id="Homing"><a class="viewcode-back" href="../index.html#events.Homing">[docs]</a><span class="k">class</span> <span class="nc">Homing</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Homing towards an external source</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create new homing event.</span>
+
+<span class="sd">        In robotics homing is equivalent to aggregation. A.k.a.: &quot;Dear fellow</span>
+<span class="sd">        fish friends, let&#39;s come home to mommy and daddy and enjoy a nice cup</span>
+<span class="sd">        of chocolate.&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">HOMING</span></div>
+
+
+<div class="viewcode-block" id="Move"><a class="viewcode-back" href="../index.html#events.Move">[docs]</a><span class="k">class</span> <span class="nc">Move</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Make the fish move to a target direction</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;External event to make fish start moving into a target direction</span>
+
+<span class="sd">        Keyword Arguments:</span>
+<span class="sd">            x {number} -- X target position (default: {0})</span>
+<span class="sd">            y {number} -- Y target position (default: {0})</span>
+<span class="sd">            z {number} -- Z target position (default: {0})</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">MOVE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">x</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">z</span> <span class="o">=</span> <span class="n">z</span></div>
+
+
+<div class="viewcode-block" id="HopCount"><a class="viewcode-back" href="../index.html#events.HopCount">[docs]</a><span class="k">class</span> <span class="nc">HopCount</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Broadcast hop counts</span>
+
+<span class="sd">    A funny side note: in Germany distributed and DNA-based organisms (often</span>
+<span class="sd">    called humans) shout &quot;Hop Hop rin in Kopp&quot;, which is a similar but slightly</span>
+<span class="sd">    different event type that makes other human instances to instantly enjoy</span>
+<span class="sd">    a whole glass of juicy beer in just a single hop! Highly efficient!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">hops</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an internal information event</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            id {int} -- ID of the fish that spreads this event.</span>
+<span class="sd">            clock {int} -- Clock value at the time the information was first</span>
+<span class="sd">                observed.</span>
+
+<span class="sd">        Keyword Arguments:</span>
+<span class="sd">            hops {int} -- Number of hops this information is already jumping</span>
+<span class="sd">                around through our beloved fish swarm (default: {0})</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">HOP_COUNT</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="n">clock</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hops</span> <span class="o">=</span> <span class="n">hops</span></div>
+
+
+<div class="viewcode-block" id="StartHopCount"><a class="viewcode-back" href="../index.html#events.StartHopCount">[docs]</a><span class="k">class</span> <span class="nc">StartHopCount</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Initialize a hop count.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;External event to make fish start a hop count</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">START_HOP_COUNT</span></div>
+
+
+<div class="viewcode-block" id="LeaderElection"><a class="viewcode-back" href="../index.html#events.LeaderElection">[docs]</a><span class="k">class</span> <span class="nc">LeaderElection</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Broadcast a leader election</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">max_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an internal leader lection event</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            id {int} -- ID of the fish that spreads this event.</span>
+<span class="sd">            max_id {int} -- Maximum fish ID, which will be the final leader.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">LEADER_ELECTION</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_id</span> <span class="o">=</span> <span class="n">max_id</span></div>
+
+
+<div class="viewcode-block" id="StartLeaderElection"><a class="viewcode-back" href="../index.html#events.StartLeaderElection">[docs]</a><span class="k">class</span> <span class="nc">StartLeaderElection</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Initialize a leader election</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;External event to make fish start a leader election</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">START_LEADER_ELECTION</span></div>
+
+
+<div class="viewcode-block" id="InfoInternal"><a class="viewcode-back" href="../index.html#events.InfoInternal">[docs]</a><span class="k">class</span> <span class="nc">InfoInternal</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Share information internally with other fish</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">clock</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">hops</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an internal information event</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            id {int} -- ID of the fish that spreads this event.</span>
+<span class="sd">            clock {int} -- Clock value at the time the information was first</span>
+<span class="sd">                observed.</span>
+<span class="sd">            message {*} -- Some information. In most cases this is just a</span>
+<span class="sd">                number.</span>
+
+<span class="sd">        Keyword Arguments:</span>
+<span class="sd">            hops {int} -- Number of hops this information is already jumping</span>
+<span class="sd">                around through our beloved fish swarm (default: {0})</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">INFO_INTERNAL</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock</span> <span class="o">=</span> <span class="n">clock</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hops</span> <span class="o">=</span> <span class="n">hops</span></div>
+
+
+<div class="viewcode-block" id="InfoExternal"><a class="viewcode-back" href="../index.html#events.InfoExternal">[docs]</a><span class="k">class</span> <span class="nc">InfoExternal</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Share external information with fish</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">track</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create an external information event</span>
+
+<span class="sd">        Arguments:</span>
+<span class="sd">            message {*} -- Some information. In most cases this is just a</span>
+<span class="sd">                number.</span>
+
+<span class="sd">        Keyword Arguments:</span>
+<span class="sd">            track {bool} -- If `true` the event will be tracked by the observer</span>
+<span class="sd">                (default: {False})</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opcode</span> <span class="o">=</span> <span class="n">INFO_EXTERNAL</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">track</span> <span class="o">=</span> <span class="n">track</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">BlueSim 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Florian Berlinger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>

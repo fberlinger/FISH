@@ -1,0 +1,844 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>BlueSim &#8212; BlueSim 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">BlueSim 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="bluesim">
+<h1>BlueSim<a class="headerlink" href="#bluesim" title="Permalink to this headline">¶</a></h1>
+<p>BlueSim is a simulator for BlueBots.</p>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-fish">
+<span id="fish"></span><h2>fish<a class="headerlink" href="#module-fish" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="fish.Fish">
+<em class="property">class </em><code class="descclassname">fish.</code><code class="descname">Fish</code><span class="sig-paren">(</span><em>id, channel, interaction, lim_neighbors=[0, inf], fish_max_speed=1, clock_freq=1, neighbor_weight=1.0, name='Unnamed', verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class models each fish robot node in the network from the fish’
+perspective.</p>
+<p>Each fish has an ID, communicates over the channel, and perceives its
+neighbors and takes actions accordingly. In taking actions, the fish can
+weight information from neighbors based on their distance. The fish aims to
+stay between a lower and upper limit of neighbors to maintain a cohesive
+collective. It can move at a maximal speed and updates its behavior on
+every clock tick.</p>
+<dl class="method">
+<dt id="fish.Fish.communicate">
+<code class="descname">communicate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.communicate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.communicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast all collected event messages.</p>
+<p>This method is called as part of the second clock cycle.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.comp_center">
+<code class="descname">comp_center</code><span class="sig-paren">(</span><em>rel_pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.comp_center"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.comp_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (potentially weighted) centroid of the fish neighbors</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first last docutils">
+<dt>rel_pos {dict} – Dictionary of relative positions to the</dt>
+<dd>neighboring fish.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>np.array – 3D centroid</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.eval">
+<code class="descname">eval</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.eval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>The fish evaluates its state</p>
+<p>Currently the fish checks all responses to previous pings and evaluates
+its relative position to all neighbors. Neighbors are other fish that
+received the ping element.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.homing_handler">
+<code class="descname">homing_handler</code><span class="sig-paren">(</span><em>event</em>, <em>pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.homing_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.homing_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Homing handler, i.e., make fish aggregated extremely</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {Homing} – Homing event
+pos {np.array} – Position of the homing event initialtor</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.hop_count_handler">
+<code class="descname">hop_count_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.hop_count_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.hop_count_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hop count handler</p>
+<p>Initialize only of the last hop count event is 4 clocks old. Otherwise
+update the hop count and resend the new value only if its larger than
+the previous hop count value.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {HopCount} – Hop count event instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.info_ext_handler">
+<code class="descname">info_ext_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.info_ext_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.info_ext_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>External information handler</p>
+<p>Always accept the external information and spread the news.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {InfoExternal} – InfoExternal event</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.info_int_handler">
+<code class="descname">info_int_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.info_int_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.info_int_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal information event handler.</p>
+<p>Only accept the information of the clock is higher than from the last
+information</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {InfoInternal} – Internal information event instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.leader_election_handler">
+<code class="descname">leader_election_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.leader_election_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.leader_election_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Leader election handler</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {LeaderElection} – Leader election event instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.log">
+<code class="descname">log</code><span class="sig-paren">(</span><em>neighbors={}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log current state</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.move">
+<code class="descname">move</code><span class="sig-paren">(</span><em>neighbors</em>, <em>rel_pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a cohesion and target-driven move</p>
+<p>The move is determined by the relative position of the centroid and a
+target position and is limited by the maximum fish speed.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first docutils">
+<dt>neighbors {set} – Set of active neighbors, i.e., other fish that</dt>
+<dd>responded to the most recent ping event.</dd>
+</dl>
+<p class="last">rel_pos {dict} – Relative positions to all neighbors</p>
+</dd>
+<dt>Returns:</dt>
+<dd>np.array – Move direction as a 3D vector</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.move_handler">
+<code class="descname">move_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.move_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.move_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle move events, i.e., update the target position.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {Move} – Event holding an x, y, and z target position</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.ping_handler">
+<code class="descname">ping_handler</code><span class="sig-paren">(</span><em>neighbors</em>, <em>rel_pos</em>, <em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.ping_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.ping_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle ping events</p>
+<p>Adds the</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first docutils">
+<dt>neighbors {set} – Set of active neighbors, i.e., nodes from which</dt>
+<dd>this fish received a ping event.</dd>
+<dt>rel_pos {dict} – Dictionary of relative positions from this fish</dt>
+<dd>to the source of the ping event.</dd>
+</dl>
+<p class="last">event {Ping} – The ping event instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the process recursively</p>
+<p>This method simulates the fish and calls <cite>eval</cite> on every clock tick as
+long as the fish <cite>is_started</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.start">
+<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the process</p>
+<p>This sets <cite>is_started</cite> to true and invokes <cite>run()</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.start_hop_count_handler">
+<code class="descname">start_hop_count_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.start_hop_count_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.start_hop_count_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hop count start handler</p>
+<p>Always accept a new start event for a hop count</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {StartHopCount} – Hop count start event</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.start_leader_election_handler">
+<code class="descname">start_leader_election_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.start_leader_election_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.start_leader_election_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Leader election start handler</p>
+<p>Always accept a new start event for a leader election</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {StartLeaderElection} – Leader election start event</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the process</p>
+<p>This sets <cite>is_started</cite> to false.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.update_behavior">
+<code class="descname">update_behavior</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.update_behavior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.update_behavior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the fish behavior.</p>
+<p>This actively changes the cohesion strategy to either ‘wait’, i.e, do
+not care about any neighbors or ‘signal_aircraft’, i.e., aggregate with
+as many fish friends as possible.</p>
+<p>In robotics ‘signal_aircraft’ is a secret key word for robo-fish-nerds
+to gather in a secret lab until some robo fish finds a robo aircraft.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.weight_neighbor">
+<code class="descname">weight_neighbor</code><span class="sig-paren">(</span><em>rel_pos_to_neighbor</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.weight_neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.weight_neighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weight neighbors by the relative position to them</p>
+<p>Currently only returns a static value but this could be tweaked in the
+future to calculate a weighted center point.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>rel_pos_to_neighbor {np.array} – Relative position to a neighbor</dd>
+<dt>Returns:</dt>
+<dd>float – Weight for this neighbor</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-environment">
+<span id="environment"></span><h2>environment<a class="headerlink" href="#module-environment" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="environment.Environment">
+<em class="property">class </em><code class="descclassname">environment.</code><code class="descname">Environment</code><span class="sig-paren">(</span><em>node_pos</em>, <em>distortion</em>, <em>prob_type='quadratic'</em>, <em>conn_thres=inf</em>, <em>conn_drop=1</em>, <em>noise_magnitude=0.1</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dynamic network of robot nodes in the underwater environment</p>
+<p>This class keeps track of the network dynamics by storing the positions of
+all nodes. It contains functions to derive the distorted position from a
+target position by adding a distortion and noise, to update the position of
+a node, to update the distance between nodes, to derive the probability of
+receiving a message from a node based on that distance, and to get the
+relative position from one node to another node.</p>
+<dl class="method">
+<dt id="environment.Environment.get_distorted_pos">
+<code class="descname">get_distorted_pos</code><span class="sig-paren">(</span><em>source_index</em>, <em>target_pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.get_distorted_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.get_distorted_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the distorted target position of a node.</p>
+<p>This method adds random noise and the position-based distortion onto
+the ideal target position to calculate the final position of the node.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first docutils">
+<dt>source_index {int} – Index of the source node which position is to</dt>
+<dd>be distorted.</dd>
+</dl>
+<p class="last">target_pos {np.array} – Ideal target position to be distorted</p>
+</dd>
+<dt>Returns:</dt>
+<dd>np.array – Final position of the node.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.get_rel_pos">
+<code class="descname">get_rel_pos</code><span class="sig-paren">(</span><em>source_index</em>, <em>target_index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.get_rel_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.get_rel_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the relative position of two nodes</p>
+<p>Calculate the vector pointing from the source node to the target node.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first last docutils">
+<dt>source_index {int} – Index of the source node, i.e., the node for</dt>
+<dd>which the relative position to target is specified.</dd>
+<dt>target_index {int} – Index of the target node, i.e., the node to</dt>
+<dd>which source is relatively positioned to.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>np,array – Vector pointing from source to target</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.prob">
+<code class="descname">prob</code><span class="sig-paren">(</span><em>node_a_index</em>, <em>node_b_index</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.prob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.prob" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the probability of connectivity of two points based on
+their Eucledian distance.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>node_a_index {int} – Node A index
+node_b_index {int} – Node B index</dd>
+<dt>Returns:</dt>
+<dd>float – probability of connectivity</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.prob_binary">
+<code class="descname">prob_binary</code><span class="sig-paren">(</span><em>distance</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.prob_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.prob_binary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate binary connectivity probability</p>
+<p>This function either returns 1 or 0 if the distance of two nodes is
+smaller (or larger) than the user defined threshold.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>distance {float} – Eucledian distance</dd>
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>float – probability of connectivity. The probability is either 1</dt>
+<dd>or 0 depending on the distance threshold.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.prob_dist">
+<code class="descname">prob_dist</code><span class="sig-paren">(</span><em>distance</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.prob_dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.prob_dist" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls the approriate probability functions</p>
+<p>The returned probability depends on prob_type</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>distance {float} – Eucledian distance</dd>
+<dt>Returns:</dt>
+<dd>float – probability of connectivity</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.prob_quadratic">
+<code class="descname">prob_quadratic</code><span class="sig-paren">(</span><em>distance</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.prob_quadratic"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.prob_quadratic" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate quadradic connectivity probability</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>distance {float} – Eucledian distance</dd>
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>float – probability of connectivity as a function of the distance.</dt>
+<dd>The probability drops quadratically.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.prob_sigmoid">
+<code class="descname">prob_sigmoid</code><span class="sig-paren">(</span><em>distance</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.prob_sigmoid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.prob_sigmoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate sigmoid connectivity probability</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>distance {float} – Eucledian distance</dd>
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>float – probability of connectivity as a sigmoid function of the</dt>
+<dd>distance.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.set_pos">
+<code class="descname">set_pos</code><span class="sig-paren">(</span><em>source_index</em>, <em>new_pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.set_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.set_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the new position</p>
+<p>Save the new position into the positions array.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>source_index {int} – Index of the node position to be set
+new_pos {np.array} – New node position ([x, y, z]) to be set.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="environment.Environment.update_distance">
+<code class="descname">update_distance</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/environment.html#Environment.update_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#environment.Environment.update_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate pairwise distances of every node</p>
+<p>Calculate and saves the pairwise distance of every node.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-interaction">
+<span id="interaction"></span><h2>interaction<a class="headerlink" href="#module-interaction" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="interaction.Interaction">
+<em class="property">class </em><code class="descclassname">interaction.</code><code class="descname">Interaction</code><span class="sig-paren">(</span><em>environment</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interaction.html#Interaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#interaction.Interaction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Underwater interactions</p>
+<p>This class models interactions of the fish with their environment, e.g.,
+to perceive other fish or to change their position.</p>
+<dl class="method">
+<dt id="interaction.Interaction.move">
+<code class="descname">move</code><span class="sig-paren">(</span><em>source_id</em>, <em>target_direction</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interaction.html#Interaction.move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#interaction.Interaction.move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Move a fish</p>
+<p>Moves the fish relatively into the given direction and adds
+target-based distortion to the fish position.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>source_id {int} – Fish identifier
+target_direction {np.array} – Relative direction to move to</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="interaction.Interaction.perceive_object">
+<code class="descname">perceive_object</code><span class="sig-paren">(</span><em>source_id</em>, <em>pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interaction.html#Interaction.perceive_object"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#interaction.Interaction.perceive_object" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perceive the relative position to an object</p>
+<p>This simulates the fish’s perception of external sources and targets.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first docutils">
+<dt>source_id {int} – Index of the fish that wants to know its</dt>
+<dd>location</dd>
+</dl>
+<p class="last">pos {np.array} – X, Y, and Z position of the object</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="interaction.Interaction.perceive_pos">
+<code class="descname">perceive_pos</code><span class="sig-paren">(</span><em>source_id</em>, <em>target_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/interaction.html#Interaction.perceive_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#interaction.Interaction.perceive_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perceive the relative position to another fish</p>
+<p>This simulates the fish’s perception of neighbors.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>source_id {int} – Index of the fish to be perceived
+target_id {int} – Index of the fish to be perceived</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-channel">
+<span id="channel"></span><h2>channel<a class="headerlink" href="#module-channel" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="channel.Channel">
+<em class="property">class </em><code class="descclassname">channel.</code><code class="descname">Channel</code><span class="sig-paren">(</span><em>environment</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel.html#Channel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel.Channel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Underwater wireless communication channel</p>
+<p>This class models the underwater communication between fish instances and
+connects fish to the environmental network.</p>
+<dl class="method">
+<dt id="channel.Channel.intercept">
+<code class="descname">intercept</code><span class="sig-paren">(</span><em>observer</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel.html#Channel.intercept"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel.Channel.intercept" title="Permalink to this definition">¶</a></dt>
+<dd><p>Let an observer intercept all messages.</p>
+<p>It’s really unfortunate but there are not just holes in Swiss cheese.
+Our channel is no exception and a god-like observer is able to listen
+to all transmitted messages in the name of research. Please don’t tell
+anyone.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>observer {Observer} – The all mighty observer</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel.Channel.set_nodes">
+<code class="descname">set_nodes</code><span class="sig-paren">(</span><em>nodes</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel.html#Channel.set_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel.Channel.set_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>This method just stores a references to all nodes</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>nodes {list} – List of node instances</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="channel.Channel.transmit">
+<code class="descname">transmit</code><span class="sig-paren">(</span><em>source</em>, <em>event</em>, <em>pos=array([0.</em>, <em>0.</em>, <em>0.])</em>, <em>is_observer=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/channel.html#Channel.transmit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#channel.Channel.transmit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transmit a broadcasted event to node instances</p>
+<p>This method gets the probability of connectedness between two nodes
+from the environment and adds the events on the node instances given
+that probability.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>source {*} – Node instance
+event {Event} – Some event to be broadcasted</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-observer">
+<span id="observer"></span><h2>observer<a class="headerlink" href="#module-observer" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="observer.Observer">
+<em class="property">class </em><code class="descclassname">observer.</code><code class="descname">Observer</code><span class="sig-paren">(</span><em>environment</em>, <em>fish</em>, <em>channel</em>, <em>clock_freq=1</em>, <em>fish_pos=None</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer" title="Permalink to this definition">¶</a></dt>
+<dd><p>The god-like observer keeps track of the fish movement for analysis.</p>
+<dl class="method">
+<dt id="observer.Observer.activate_reset">
+<code class="descname">activate_reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.activate_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.activate_reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Activate automatic resetting of the fish positions on a new
+instruction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.check_info_consistency">
+<code class="descname">check_info_consistency</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.check_info_consistency"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.check_info_consistency" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check consistency of a tracked information</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.check_instructions">
+<code class="descname">check_instructions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.check_instructions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.check_instructions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check external instructions to be broadcasted.</p>
+<p>If we reach the clock cycle in which they should be broadcasted, send
+them out.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.check_transmissions">
+<code class="descname">check_transmissions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.check_transmissions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.check_transmissions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check intercepted transmission from the channel</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.deactivate_reset">
+<code class="descname">deactivate_reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.deactivate_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.deactivate_reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deactivate automatic resetting of the fish positions on a new
+instruction.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.eval">
+<code class="descname">eval</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.eval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save the position and connectivity status of the fish.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.instruct">
+<code class="descname">instruct</code><span class="sig-paren">(</span><em>event</em>, <em>rel_clock=0</em>, <em>fish_id=None</em>, <em>pos=array([0.</em>, <em>0.</em>, <em>0.])</em>, <em>fish_all=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.instruct"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.instruct" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make the observer instruct the fish swarm.</p>
+<p>This will effectively trigger an event in the fish environment, like an
+instruction or some kind of obstacle.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {*} – Some event instance.</dd>
+<dt>Keyword Arguments:</dt>
+<dd><dl class="first last docutils">
+<dt>rel_clock {number} – Number of relative clock cycles from now when</dt>
+<dd>to broadcast the event (default: {0})</dd>
+<dt>fish_id {int} – If not <cite>None</cite> directly put the event on the</dt>
+<dd>fish with this id. (default: {None})</dd>
+<dt>pos {np.array} – Imaginary event position. Used to determine the</dt>
+<dd>probability that fish will hear the
+event. (default: {np.zeros(2,)})</dd>
+<dt>fish_all {bool} – If <cite>true</cite> all fish will immediately receive the</dt>
+<dd>event, i.e., no probabilistic event anymore. (default: {False})</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>dark=False</em>, <em>white_axis=False</em>, <em>no_legend=False</em>, <em>show_bar_chart=False</em>, <em>no_star=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the fish movement</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the process recursively</p>
+<p>This method simulates the fish and calls <cite>eval</cite> on every clock tick as
+long as the fish <cite>is_started</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.start">
+<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the process</p>
+<p>This sets <cite>is_started</cite> to true and invokes <cite>run()</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="observer.Observer.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/observer.html#Observer.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#observer.Observer.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the process</p>
+<p>This sets <cite>is_started</cite> to false.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-events">
+<span id="events"></span><h2>events<a class="headerlink" href="#module-events" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="events.Homing">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">Homing</code><a class="reference internal" href="_modules/events.html#Homing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.Homing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Homing towards an external source</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.HopCount">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">HopCount</code><span class="sig-paren">(</span><em>id</em>, <em>clock</em>, <em>hops=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/events.html#HopCount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.HopCount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast hop counts</p>
+<p>A funny side note: in Germany distributed and DNA-based organisms (often
+called humans) shout “Hop Hop rin in Kopp”, which is a similar but slightly
+different event type that makes other human instances to instantly enjoy
+a whole glass of juicy beer in just a single hop! Highly efficient!</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.InfoExternal">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">InfoExternal</code><span class="sig-paren">(</span><em>message</em>, <em>track=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/events.html#InfoExternal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.InfoExternal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Share external information with fish</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.InfoInternal">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">InfoInternal</code><span class="sig-paren">(</span><em>id</em>, <em>clock</em>, <em>message</em>, <em>hops=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/events.html#InfoInternal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.InfoInternal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Share information internally with other fish</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.LeaderElection">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">LeaderElection</code><span class="sig-paren">(</span><em>id</em>, <em>max_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/events.html#LeaderElection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.LeaderElection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast a leader election</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.Move">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">Move</code><span class="sig-paren">(</span><em>x=0</em>, <em>y=0</em>, <em>z=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/events.html#Move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.Move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make the fish move to a target direction</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.Ping">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">Ping</code><span class="sig-paren">(</span><em>id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/events.html#Ping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.Ping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Ping your beloved neighbor fish</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.StartHopCount">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">StartHopCount</code><a class="reference internal" href="_modules/events.html#StartHopCount"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.StartHopCount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a hop count.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="events.StartLeaderElection">
+<em class="property">class </em><code class="descclassname">events.</code><code class="descname">StartLeaderElection</code><a class="reference internal" href="_modules/events.html#StartLeaderElection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#events.StartLeaderElection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a leader election</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-eventcodes">
+<span id="eventcodes"></span><h2>eventcodes<a class="headerlink" href="#module-eventcodes" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-utils">
+<span id="utils"></span><h2>utils<a class="headerlink" href="#module-utils" title="Permalink to this headline">¶</a></h2>
+<p>Helper methods to run the experiment</p>
+<dl class="function">
+<dt id="utils.generate_distortion">
+<code class="descclassname">utils.</code><code class="descname">generate_distortion</code><span class="sig-paren">(</span><em>type='linear'</em>, <em>magnitude=1</em>, <em>n=10</em>, <em>show=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#generate_distortion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.generate_distortion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a distortion model represented as a vector field</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.generate_fish">
+<code class="descclassname">utils.</code><code class="descname">generate_fish</code><span class="sig-paren">(</span><em>n</em>, <em>channel</em>, <em>interaction</em>, <em>lim_neighbors</em>, <em>neighbor_weights=None</em>, <em>fish_max_speeds=None</em>, <em>clock_freqs=None</em>, <em>verbose=False</em>, <em>names=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#generate_fish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.generate_fish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate some fish</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>n {int} – Number of fish to generate
+channel {Channel} – Channel instance
+interaction {Interaction} – Interaction instance
+lim_neighbors {list} – Tuple of min and max neighbors
+neighbor_weight {float|list} – List of neighbor weights
+fish_max_speeds {float|list} – List of max speeds
+clock_freqs {int|list} – List of clock speeds
+names {list} – List of names for your fish</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.init_simulation">
+<code class="descclassname">utils.</code><code class="descname">init_simulation</code><span class="sig-paren">(</span><em>clock_freq</em>, <em>single_time</em>, <em>offset_time</em>, <em>num_trials</em>, <em>final_buffer</em>, <em>run_time</em>, <em>num_fish</em>, <em>size_dist</em>, <em>center</em>, <em>spread</em>, <em>fish_pos</em>, <em>lim_neighbors</em>, <em>neighbor_weights</em>, <em>fish_max_speeds</em>, <em>noise_magnitude</em>, <em>conn_thres</em>, <em>prob_type</em>, <em>dist_type</em>, <em>verbose</em>, <em>conn_drop=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#init_simulation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.init_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize all the instances needed for a simulation</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><p class="first">clock_freq {int} – Clock frequency for each fish.
+single_time {float} – Number clock cycles per individual run.
+offset_time {float} – Initial clock offset time
+num_trials {int} – Number of trials per experiment.
+final_buffer {float} – Final clock buffer (because the clocks don’t</p>
+<blockquote>
+<div>sync perfectly).</div></blockquote>
+<p>run_time {float} – Total run time in seconds.
+num_fish {int} – Number of fish.
+size_dist {int} – Distortion field size.
+center {float} – Distortion field center.
+spread {float} – Initial fish position spread.
+fish_pos {np.array} – Initial fish position.
+lim_neighbors {list} – Min. and max. desired neighbors. If too few</p>
+<blockquote>
+<div>neighbors start aggregation, if too many neighbors disperse!</div></blockquote>
+<p>neighbor_weights {float} – Distance-depending neighbor weight.
+fish_max_speeds {float} – Max fish speed.
+noise_magnitude {float} – Amount of white noise added to each move.
+conn_thres {float} – Distance at which the connection either cuts off</p>
+<blockquote>
+<div>or starts dropping severely.</div></blockquote>
+<dl class="docutils">
+<dt>prob_type {str} – Probability type. Can be <cite>binary</cite>, <cite>quadratic</cite>, or</dt>
+<dd><cite>sigmoid</cite>.</dd>
+</dl>
+<p class="last">dist_type {str} – Position distortion type
+verbose {bool} – If <cite>true</cite> print a lot of stuff</p>
+</dd>
+<dt>Keyword Arguments:</dt>
+<dd><dl class="first last docutils">
+<dt>conn_drop {number} – Defined the connection drop for the sigmoid</dt>
+<dd>(default: {1.0})</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd><dl class="first last docutils">
+<dt>tuple – Quintuple holding the <cite>channel</cite>, <cite>environment</cite>, <a href="#id1"><span class="problematic" id="id2">`</span></a>fish,</dt>
+<dd><cite>interaction</cite>, and <cite>observer</cite></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="utils.run_simulation">
+<code class="descclassname">utils.</code><code class="descname">run_simulation</code><span class="sig-paren">(</span><em>fish</em>, <em>observer</em>, <em>run_time=10</em>, <em>dark=False</em>, <em>white_axis=False</em>, <em>no_legend=False</em>, <em>no_star=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/utils.html#run_simulation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#utils.run_simulation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the simulation.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>fish {list} – List of fish instances
+observer {Observer} – Observer instance</dd>
+<dt>Keyword Arguments:</dt>
+<dd>run_time {number} – Total run time in seconds (default: {10})
+dark {bool} – If <cite>True</cite> plot a dark chart (default: {False})
+white_axis {bool} – If <cite>True</cite> plot white axes (default: {False})
+no_legend {bool} – If <cite>True</cite> do not plot a legend (default: {False})
+no_star {bool} – If <cite>True</cite> do not plot a star (default: {False})</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">BlueSim</a><ul>
+<li><a class="reference internal" href="#module-fish">fish</a></li>
+<li><a class="reference internal" href="#module-environment">environment</a></li>
+<li><a class="reference internal" href="#module-interaction">interaction</a></li>
+<li><a class="reference internal" href="#module-channel">channel</a></li>
+<li><a class="reference internal" href="#module-observer">observer</a></li>
+<li><a class="reference internal" href="#module-events">events</a></li>
+<li><a class="reference internal" href="#module-eventcodes">eventcodes</a></li>
+<li><a class="reference internal" href="#module-utils">utils</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">BlueSim 0.0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Florian Berlinger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>
