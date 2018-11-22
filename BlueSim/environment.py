@@ -17,6 +17,7 @@ class Environment():
 
     def __init__(
         self,
+        arena_size,
         node_pos,
         distortion,
         prob_type='quadratic',
@@ -49,6 +50,7 @@ class Environment():
                 simulation (default: {False})
         """
         # Params
+        self.arena_size = arena_size
         self.node_pos = node_pos
         self.distortion = distortion
         self.conn_thres = conn_thres
@@ -59,9 +61,9 @@ class Environment():
 
         # Init
         # restrict to tank
-        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, 177)
-        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, 177)
-        self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, 116)
+        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, self.arena_size[0])
+        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, self.arena_size[1])
+        self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, self.arena_size[2])
 
         self.num_nodes = node_pos.size
         self.update_distance()
@@ -88,7 +90,7 @@ class Environment():
             np.random.rand(3,) * 2 - np.ones((3,))
         ) * self.noise_magnitude
 
-        return target_pos + self.distortion[indices[0], indices[1], indices[2]] + noise
+        return target_pos + self.distortion[math.floor(indices[0]/10), math.floor(indices[1]/10)] + noise
 
     def set_pos(self, source_index, new_pos):
         """Set the new position

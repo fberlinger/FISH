@@ -413,21 +413,24 @@ class Fish():
         Returns:
             np.array -- Move direction as a 3D vector
         """
-        n = len(neighbors)
+
         # Get the centroid of the swarm
         centroid_pos = np.zeros((3,))
 
-        if n < self.lim_neighbors[0]:
-            # Get the relative direction to the centroid of the swarm
-            centroid_pos = self.comp_center(rel_pos)
-        elif n > self.lim_neighbors[1]:
-            # Get the inverse relative direction to centroid of the swarm
-            centroid_pos = -self.comp_center(rel_pos)
+        # Get the relative direction to the centroid of the swarm
+        centroid_pos = self.comp_center(rel_pos)
+
+        if np.linalg.norm(centroid_pos) > 200:
+            move = self.target_pos + centroid_pos
+
+        else:
+            move = self.target_pos - centroid_pos
+            
             # Adjust length #xx change
             #magnitude = np.linalg.norm(centroid_pos)
             #centroid_pos /= magnitude**2
 
-        move = self.target_pos + centroid_pos
+        
 
         # Cap the length of the move
         magnitude = np.linalg.norm(move)

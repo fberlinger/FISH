@@ -380,9 +380,9 @@ class Observer():
         """Plot the fish movement
         """
         ax = plt.gca(projection='3d')
-        ax.set_xlim3d(0, 178)
-        ax.set_ylim3d(0, 178)
-        ax.set_zlim3d(0, 117)
+        ax.set_xlim3d(0, 1780)
+        ax.set_ylim3d(0, 1780)
+        ax.set_zlim3d(0, 1170)
         ax.set_xlabel('X axis')
         ax.set_ylabel('Y axis')
         ax.set_zlabel('Z axis')
