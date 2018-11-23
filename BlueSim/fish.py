@@ -70,6 +70,7 @@ class Fish():
         self.name = name
         self.verbose = verbose
 
+        self.body_length = 130
         self.clock_speed = 1 / self.clock_freq
         self.clock = 0
         self.queue = Queue()
@@ -402,17 +403,18 @@ class Fish():
         return center
 
     def lj_force(self, rel_pos):
-        a = 4 # 12
-        b = 2 # 6
+        a = 12 # 12
+        b = 6 # 6
         epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
         gamma = 100 # force gain
         r_target = self.target_dist
+        r_const = r_target + 2 * self.body_length
 
         center = np.zeros((3,))
         n = max(1, len(rel_pos))
 
         for key, value in rel_pos.items():
-            r = max(0.001, np.linalg.norm(value))
+            r = np.clip(np.linalg.norm(value), 0.001, r_const)
             f_lj = -gamma * epsilon /r * (a * (r_target / r)**a - 2 * b * (r_target / r)**b)
             center += f_lj * value
 
