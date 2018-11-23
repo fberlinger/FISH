@@ -28,6 +28,7 @@ class Fish():
         id,
         channel,
         interaction,
+        target_dist=390,
         lim_neighbors=[0, math.inf],
         fish_max_speed=1,
         clock_freq=1,
@@ -61,6 +62,7 @@ class Fish():
         self.id = id
         self.channel = channel
         self.interaction = interaction
+        self.target_dist = target_dist
         self.neighbor_weight = neighbor_weight
         self.lim_neighbors = lim_neighbors
         self.fish_max_speed = fish_max_speed
@@ -345,7 +347,7 @@ class Fish():
 
         self.last_leader_election_clock = self.clock
 
-    def weight_neighbor(self, rel_pos_to_neighbor):
+    def weight_neighbor(self, rel_pos_to_neighbor): #xx obsolete with lj-pot?
         """Weight neighbors by the relative position to them
 
         Currently only returns a static value but this could be tweaked in the
@@ -399,6 +401,25 @@ class Fish():
 
         return center
 
+    def lj_force(self, rel_pos):
+        a = 4 # 12
+        b = 2 # 6
+        epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
+        gamma = 100 # force gain
+        r_target = self.target_dist
+
+        center = np.zeros((3,))
+        n = max(1, len(rel_pos))
+
+        for key, value in rel_pos.items():
+            r = max(0.001, np.linalg.norm(value))
+            f_lj = -gamma * epsilon /r * (a * (r_target / r)**a - 2 * b * (r_target / r)**b)
+            center += f_lj * value
+
+        center /= n
+
+        return center
+
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
 
@@ -418,26 +439,17 @@ class Fish():
         centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
-        centroid_pos = self.comp_center(rel_pos)
+        centroid_pos = self.lj_force(rel_pos)
 
-        if np.linalg.norm(centroid_pos) > 200:
-            move = self.target_pos + centroid_pos
-
-        else:
-            move = self.target_pos - centroid_pos
-            
-            # Adjust length #xx change
-            #magnitude = np.linalg.norm(centroid_pos)
-            #centroid_pos /= magnitude**2
-
-        
+        move = self.target_pos + centroid_pos
 
         # Cap the length of the move
         magnitude = np.linalg.norm(move)
-        if magnitude == 0:
-            magnitude = 1
-        direction = move / magnitude
-        final_move = direction * min(magnitude, self.fish_max_speed)
+        if magnitude > 0:
+            direction = move / magnitude
+            final_move = direction * min(magnitude, self.fish_max_speed)
+        else:
+            final_move = move
 
         if self.verbose:
             print('Fish #{}: move to {}'.format(self.id, final_move))
