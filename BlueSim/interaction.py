@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import random
 
@@ -61,6 +62,40 @@ class Interaction():
             return self.environment.get_rel_pos(source_id, target_id)
         else:
             return np.zeros((3,))
+
+    def occlude(self, source_id, neighbors, rel_pos):
+        r_sphere = 50 # 50mm blocking sphere
+
+        def sortSecond(val):
+            return val[1]
+
+        n_by_dist = []
+        for key, value in rel_pos.items():
+            n_by_dist.append((key, np.linalg.norm(value)))
+        n_by_dist.sort(key = sortSecond)
+
+        n_valid = [n_by_dist[0]]
+        for candidate in n_by_dist[1:]:
+            occluded = False
+            d_candidate = max(0.001, candidate[1])
+            coord_candidate = rel_pos[candidate[0]]
+
+            for verified in n_valid:
+                d_verified = max(0.001, verified[1])
+                coord_verified = rel_pos[verified[0]]
+
+                theta_min = math.atan(r_sphere / d_verified)
+
+                theta = abs(math.acos(np.dot(coord_candidate, coord_verified)
+                    / (d_candidate * d_verified)))
+
+                if theta < theta_min:
+                    occluded = True
+                    neighbors.remove(candidate[0])
+                    break
+
+            if not occluded:
+                n_valid.append(candidate)
 
     def move(self, source_id, target_direction):
         """Move a fish

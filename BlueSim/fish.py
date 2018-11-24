@@ -402,7 +402,7 @@ class Fish():
 
         return center
 
-    def lj_force(self, rel_pos):
+    def lj_force(self, neighbors, rel_pos):
         a = 12 # 12
         b = 6 # 6
         epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
@@ -411,12 +411,12 @@ class Fish():
         r_const = r_target + 2 * self.body_length
 
         center = np.zeros((3,))
-        n = max(1, len(rel_pos))
+        n = len(neighbors)
 
-        for key, value in rel_pos.items():
-            r = np.clip(np.linalg.norm(value), 0.001, r_const)
+        for neighbor in neighbors:
+            r = np.clip(np.linalg.norm(rel_pos[neighbor]), 0.001, r_const)
             f_lj = -gamma * epsilon /r * (a * (r_target / r)**a - 2 * b * (r_target / r)**b)
-            center += f_lj * value
+            center += f_lj * rel_pos[neighbor]
 
         center /= n
 
@@ -441,7 +441,7 @@ class Fish():
         centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
-        centroid_pos = self.lj_force(rel_pos)
+        centroid_pos = self.lj_force(neighbors, rel_pos)
 
         move = self.target_pos + centroid_pos
 
@@ -519,6 +519,7 @@ class Fish():
 
         if self.clock > 1:
             # Move around (or just stay where you are)
+            self.interaction.occlude(self.id, neighbors, rel_pos)
             self.interaction.move(self.id, self.move(neighbors, rel_pos))
 
         # Update behavior based on status and information - update behavior
