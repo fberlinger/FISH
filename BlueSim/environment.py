@@ -65,6 +65,8 @@ class Environment():
         self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, self.arena_size[1])
         self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, self.arena_size[2])
 
+        self.node_vel = np.zeros((len(self.node_pos), 3))
+
         self.num_nodes = node_pos.size
         self.update_distance()
 
@@ -110,6 +112,10 @@ class Environment():
             print('Env: {} is now at {}'.format(
                 source_index, new_pos, self.node_pos
             ))
+
+    def set_vel(self, source_index, old_pos, new_pos):
+        self.node_vel[source_index] = new_pos - old_pos
+
 
     def update_distance(self):
         """Calculate pairwise distances of every node

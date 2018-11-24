@@ -64,10 +64,12 @@ class Interaction():
             return np.zeros((3,))
 
     def occlude(self, source_id, neighbors, rel_pos):
-        r_sphere = 50 # 50mm blocking sphere
-
         def sortSecond(val):
             return val[1]
+
+        r_sphere = 50 # 50mm blocking sphere imposed by neighbors
+        r_blockage = 25 # 50mm blocking corridor behind itself
+        vel = self.environment.node_vel[source_id]
 
         n_by_dist = []
         for key, value in rel_pos.items():
@@ -80,6 +82,21 @@ class Interaction():
             d_candidate = max(0.001, candidate[1])
             coord_candidate = rel_pos[candidate[0]]
 
+            # blind spot
+            mag_vel = max(0.001, np.linalg.norm(vel[:2]))
+            mag_pos_cand = max(0.001, np.linalg.norm(coord_candidate[:2]))
+            print(mag_vel, '    ', mag_pos_cand)
+
+
+            angle = abs(math.acos(np.dot(vel[:2], coord_candidate[:2])
+                / (mag_vel * mag_pos_cand))) - math.pi / 2
+
+            if  angle * mag_pos_cand < r_blockage:
+                occluded = True
+                neighbors.remove(candidate[0])
+                break
+
+            # occlusion
             for verified in n_valid:
                 d_verified = max(0.001, verified[1])
                 coord_verified = rel_pos[verified[0]]
@@ -119,7 +136,7 @@ class Interaction():
         final_pos[1] = np.clip(final_pos[1], 0, self.environment.arena_size[1])
         final_pos[2] = np.clip(final_pos[2], 0, self.environment.arena_size[2])
 
-
+        self.environment.set_vel(source_id, node_pos, final_pos)
         self.environment.set_pos(source_id, final_pos)
 
         if self.verbose:
