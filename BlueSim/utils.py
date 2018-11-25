@@ -20,7 +20,7 @@ def generate_distortion(type='none', magnitude=1, n=10, show=False):
     """
 
     X, Y = np.mgrid[0:n, 0:n]
-    distortion = np.zeros((n+1, n+1, 3))
+    distortion = np.zeros((n, n, 3))
     #X, Y, Z = np.mgrid[0:n, 0:n, 0:n]
     #distortion = np.zeros((n, n, n, 3))
 
@@ -260,12 +260,12 @@ def run_simulation(
         print('It\'s time to say bye bye!')
 
         observer.stop()
-        observer.plot(
-            dark=dark,
-            white_axis=white_axis,
-            no_legend=no_legend,
-            no_star=no_star
-        )
+        # observer.plot(
+        #     dark=dark,
+        #     white_axis=white_axis,
+        #     no_legend=no_legend,
+        #     no_star=no_star
+        # )
 
     print('Please wait patiently {} seconds. Thanks.'.format(run_time))
 
@@ -273,7 +273,10 @@ def run_simulation(
     for f in fish:
         threading.Thread(target=f.start).start()
 
-    threading.Thread(target=observer.start).start()
+    observer_thread = threading.Thread(target=observer.start)
+    observer_thread.start()
+
 
     # Ciao stops run time
     threading.Timer(run_time, stop).start()
+    observer_thread.join()

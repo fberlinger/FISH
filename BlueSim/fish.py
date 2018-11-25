@@ -411,7 +411,7 @@ class Fish():
         epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
         gamma = 100 # force gain
         r_target = self.target_dist
-        r_const = r_target + 2 * self.body_length
+        r_const = r_target + 1 * self.body_length
 
         center = np.zeros((3,))
         n = len(neighbors)

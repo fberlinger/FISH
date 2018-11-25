@@ -76,6 +76,9 @@ class Observer():
         self.x = []
         self.y = []
         self.z = []
+        self.vx = []
+        self.vy = []
+        self.vz = []
         self.c = []
         self.status = []
         self.reset = False
@@ -87,6 +90,9 @@ class Observer():
             self.x.append([])
             self.y.append([])
             self.z.append([])
+            self.vx.append([])
+            self.vy.append([])
+            self.vz.append([])
             self.status.append([])
 
         self.is_started = False
@@ -357,6 +363,9 @@ class Observer():
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
             self.z[i].append(self.environment.node_pos[i, 2])
+            self.vx[i].append(self.environment.node_vel[i, 0])
+            self.vy[i].append(self.environment.node_vel[i, 1])
+            self.vz[i].append(self.environment.node_vel[i, 2])
 
             n = len(self.fish[i].neighbors)
 
