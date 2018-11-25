@@ -19,6 +19,7 @@ class Environment():
         self,
         arena_size,
         node_pos,
+        node_vel,
         distortion,
         prob_type='quadratic',
         conn_thres=math.inf,
@@ -52,6 +53,7 @@ class Environment():
         # Params
         self.arena_size = arena_size
         self.node_pos = node_pos
+        self.node_vel = node_vel
         self.distortion = distortion
         self.conn_thres = conn_thres
         self.conn_drop = conn_drop
@@ -64,8 +66,6 @@ class Environment():
         self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, self.arena_size[0])
         self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, self.arena_size[1])
         self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, self.arena_size[2])
-
-        self.node_vel = np.zeros((len(self.node_pos), 3))
 
         self.num_nodes = node_pos.size
         self.update_distance()

@@ -403,6 +403,9 @@ class Fish():
         return center
 
     def lj_force(self, neighbors, rel_pos):
+        if not neighbors:
+            return np.zeros((3,))
+
         a = 12 # 12
         b = 6 # 6
         epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
@@ -519,6 +522,7 @@ class Fish():
 
         if self.clock > 1:
             # Move around (or just stay where you are)
+            self.interaction.blind_spot(self.id, neighbors, rel_pos)
             self.interaction.occlude(self.id, neighbors, rel_pos)
             self.interaction.move(self.id, self.move(neighbors, rel_pos))
 
