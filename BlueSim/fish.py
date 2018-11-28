@@ -28,6 +28,7 @@ class Fish():
         id,
         channel,
         interaction,
+        target_dist=390,
         lim_neighbors=[0, math.inf],
         fish_max_speed=1,
         clock_freq=1,
@@ -61,6 +62,7 @@ class Fish():
         self.id = id
         self.channel = channel
         self.interaction = interaction
+        self.target_dist = target_dist
         self.neighbor_weight = neighbor_weight
         self.lim_neighbors = lim_neighbors
         self.fish_max_speed = fish_max_speed
@@ -68,6 +70,7 @@ class Fish():
         self.name = name
         self.verbose = verbose
 
+        self.body_length = 130
         self.clock_speed = 1 / self.clock_freq
         self.clock = 0
         self.queue = Queue()
@@ -345,7 +348,7 @@ class Fish():
 
         self.last_leader_election_clock = self.clock
 
-    def weight_neighbor(self, rel_pos_to_neighbor):
+    def weight_neighbor(self, rel_pos_to_neighbor): #xx obsolete with lj-pot?
         """Weight neighbors by the relative position to them
 
         Currently only returns a static value but this could be tweaked in the
@@ -399,6 +402,29 @@ class Fish():
 
         return center
 
+    def lj_force(self, neighbors, rel_pos):
+        if not neighbors:
+            return np.zeros((3,))
+
+        a = 12 # 12
+        b = 6 # 6
+        epsilon = 100 # depth of potential well, V_LJ(r_target) = epsilon
+        gamma = 100 # force gain
+        r_target = self.target_dist
+        r_const = r_target + 1 * self.body_length
+
+        center = np.zeros((3,))
+        n = len(neighbors)
+
+        for neighbor in neighbors:
+            r = np.clip(np.linalg.norm(rel_pos[neighbor]), 0.001, r_const)
+            f_lj = -gamma * epsilon /r * (a * (r_target / r)**a - 2 * b * (r_target / r)**b)
+            center += f_lj * rel_pos[neighbor]
+
+        center /= n
+
+        return center
+
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
 
@@ -413,28 +439,22 @@ class Fish():
         Returns:
             np.array -- Move direction as a 3D vector
         """
-        n = len(neighbors)
+
         # Get the centroid of the swarm
         centroid_pos = np.zeros((3,))
 
-        if n < self.lim_neighbors[0]:
-            # Get the relative direction to the centroid of the swarm
-            centroid_pos = self.comp_center(rel_pos)
-        elif n > self.lim_neighbors[1]:
-            # Get the inverse relative direction to centroid of the swarm
-            centroid_pos = -self.comp_center(rel_pos)
-            # Adjust length #xx change
-            #magnitude = np.linalg.norm(centroid_pos)
-            #centroid_pos /= magnitude**2
+        # Get the relative direction to the centroid of the swarm
+        centroid_pos = self.lj_force(neighbors, rel_pos)
 
         move = self.target_pos + centroid_pos
 
         # Cap the length of the move
         magnitude = np.linalg.norm(move)
-        if magnitude == 0:
-            magnitude = 1
-        direction = move / magnitude
-        final_move = direction * min(magnitude, self.fish_max_speed)
+        if magnitude > 0:
+            direction = move / magnitude
+            final_move = direction * min(magnitude, self.fish_max_speed)
+        else:
+            final_move = move
 
         if self.verbose:
             print('Fish #{}: move to {}'.format(self.id, final_move))
@@ -502,6 +522,8 @@ class Fish():
 
         if self.clock > 1:
             # Move around (or just stay where you are)
+            self.interaction.blind_spot(self.id, neighbors, rel_pos)
+            self.interaction.occlude(self.id, neighbors, rel_pos)
             self.interaction.move(self.id, self.move(neighbors, rel_pos))
 
         # Update behavior based on status and information - update behavior

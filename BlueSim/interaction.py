@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import random
 
@@ -62,6 +63,66 @@ class Interaction():
         else:
             return np.zeros((3,))
 
+    def blind_spot(self, source_id, neighbors, rel_pos):
+        r_blockage = 25 # 50mm blocking corridor behind itself
+        vel = self.environment.node_vel[source_id]
+
+        candidates = neighbors.copy()
+        for neighbor in candidates:
+            dot = np.dot(vel[:2], rel_pos[neighbor][:2])
+            if dot < 0:
+                mag_vel = max(0.001, np.linalg.norm(vel[:2]))
+                dist_neighbor = max(0.001, np.linalg.norm(rel_pos[neighbor][:2]))
+
+                angle = abs(math.acos(dot / (mag_vel * dist_neighbor))) - math.pi / 2 # cos(a-b) = ca*cb+sa*sb = sa
+
+                if  math.cos(angle) * dist_neighbor < r_blockage:
+                    neighbors.remove(neighbor)
+
+        #print(source_id, neighbors)
+
+    def occlude(self, source_id, neighbors, rel_pos):
+        if not neighbors:
+            return
+
+        def sortSecond(val):
+            return val[1]
+
+        r_sphere = 50 # 50mm blocking sphere imposed by neighbors
+
+        n_by_dist = []
+        for key, value in rel_pos.items():
+            if key in neighbors:
+                n_by_dist.append((key, np.linalg.norm(value)))
+        n_by_dist.sort(key = sortSecond)
+
+        n_valid = [n_by_dist[0]]
+        for neighbor in n_by_dist[1:]:
+            occluded = False
+            d_neighbor = max(0.001, neighbor[1])
+            coord_neighbor = rel_pos[neighbor[0]]
+
+            for verified in n_valid:
+                d_verified = max(0.001, verified[1])
+                coord_verified = rel_pos[verified[0]]
+
+                theta_min = math.atan(r_sphere / d_verified)
+
+                theta = abs(math.acos(np.dot(coord_neighbor, coord_verified)
+                    / (d_neighbor * d_verified)))
+
+                if theta < theta_min:
+                    occluded = True
+                    neighbors.remove(neighbor[0])
+                    if not neighbors:
+                        return
+                    break
+
+            if not occluded:
+                n_valid.append(neighbor)
+
+        #print(source_id, neighbors)
+
     def move(self, source_id, target_direction):
         """Move a fish
 
@@ -75,16 +136,16 @@ class Interaction():
         node_pos = self.environment.node_pos[source_id]
         target_pos = node_pos + target_direction
         # Restrict to tank
-        target_pos[0] = np.clip(target_pos[0], 0, 177)
-        target_pos[1] = np.clip(target_pos[1], 0, 177)
-        target_pos[2] = np.clip(target_pos[2], 0, 116)
+        target_pos[0] = np.clip(target_pos[0], 0, self.environment.arena_size[0])
+        target_pos[1] = np.clip(target_pos[1], 0, self.environment.arena_size[1])
+        target_pos[2] = np.clip(target_pos[2], 0, self.environment.arena_size[2])
 
         final_pos = self.environment.get_distorted_pos(source_id, target_pos)
-        final_pos[0] = np.clip(final_pos[0], 0, 177)
-        final_pos[1] = np.clip(final_pos[1], 0, 177)
-        final_pos[2] = np.clip(final_pos[2], 0, 116)
+        final_pos[0] = np.clip(final_pos[0], 0, self.environment.arena_size[0])
+        final_pos[1] = np.clip(final_pos[1], 0, self.environment.arena_size[1])
+        final_pos[2] = np.clip(final_pos[2], 0, self.environment.arena_size[2])
 
-
+        self.environment.set_vel(source_id, node_pos, final_pos)
         self.environment.set_pos(source_id, final_pos)
 
         if self.verbose:
