@@ -261,11 +261,11 @@ def run_simulation(
 
         observer.stop()
         # observer.plot(
-        #     dark=dark,
-        #     white_axis=white_axis,
-        #     no_legend=no_legend,
-        #     no_star=no_star
-        # )
+        #      dark=dark,
+        #      white_axis=white_axis,
+        #      no_legend=no_legend,
+        #      no_star=no_star
+        #  )
 
     print('Please wait patiently {} seconds. Thanks.'.format(run_time))
 
