@@ -28,6 +28,7 @@ class Fish():
         id,
         channel,
         interaction,
+        dynamics,
         target_dist=390,
         lim_neighbors=[0, math.inf],
         fish_max_speed=1,
@@ -62,6 +63,7 @@ class Fish():
         self.id = id
         self.channel = channel
         self.interaction = interaction
+        self.dynamics = dynamics
         self.target_dist = target_dist
         self.neighbor_weight = neighbor_weight
         self.lim_neighbors = lim_neighbors
@@ -69,6 +71,11 @@ class Fish():
         self.clock_freq = clock_freq
         self.name = name
         self.verbose = verbose
+
+        self.caudal = 0
+        self.dorsal = 0
+        self.pect_r = 0
+        self.pect_l = 0
 
         self.body_length = 130
         self.clock_speed = 1 / self.clock_freq
@@ -425,6 +432,39 @@ class Fish():
 
         return center
 
+    def depth_ctrl(self, r_move_g):
+        pitch = np.arctan2(r_move_g[2], math.sqrt(r_move_g[0]**2 + r_move_g[1]**2)) * 180 / math.pi
+
+        if pitch > 1:
+            self.dorsal = 1
+        elif pitch < -1:
+            self.dorsal = 0
+
+    def home(self, r_move_g):
+        caudal_range = 20 # abs(heading) below which caudal fin is swithed on
+
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        # target to the right
+        if heading > 0:
+            self.pect_l = min(1, 0.2 + abs(heading) / 180)
+            self.pect_r = 0
+
+            if heading < caudal_range:
+                self.caudal = min(1, 0.2 + np.linalg.norm(r_move_g[0:2])/(5*self.body_length))
+            else:
+                self.caudal = 0
+
+        # target to the left
+        else:
+            self.pect_r = min(1, 0.2 + abs(heading) / 180)
+            self.pect_l = 0
+
+            if heading > -caudal_range:
+                self.caudal = min(1, 0.2 + np.linalg.norm(r_move_g[0:2])/(5*self.body_length))
+            else:
+                self.caudal = 0
+
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
 
@@ -448,17 +488,29 @@ class Fish():
 
         move = self.target_pos + centroid_pos
 
+        # Global to Robot Transformation
+        r_T_g = self.interaction.rot_global_to_robot(self.id)
+        r_move_g = r_T_g @ move
+
+        # Simulate dynamics and restrict movement #xx
+        self.depth_ctrl(r_move_g)
+        self.home(r_move_g)
+
+        self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
+        final_move = self.dynamics.simulate_move(self.id)
+
         # Cap the length of the move
-        magnitude = np.linalg.norm(move)
-        if magnitude > 0:
-            direction = move / magnitude
-            final_move = direction * min(magnitude, self.fish_max_speed)
-        else:
-            final_move = move
+        # magnitude = np.linalg.norm(move)
+        # if magnitude > 0:
+        #     direction = move / magnitude
+        #     final_move = direction * min(magnitude, self.fish_max_speed)
+        # else:
+        #     final_move = move
 
-        if self.verbose:
-            print('Fish #{}: move to {}'.format(self.id, final_move))
+        # if self.verbose:
+        #     print('Fish #{}: move to {}'.format(self.id, final_move))
 
+        #print(final_move)
         return final_move
 
     def update_behavior(self):

@@ -63,6 +63,11 @@ class Interaction():
         else:
             return np.zeros((3,))
 
+    def rot_global_to_robot(self, source_id):
+        phi = self.environment.node_phi[source_id]
+
+        return np.array([[math.cos(phi), math.sin(phi), 0], [-math.sin(phi), math.cos(phi), 0], [0, 0, 1]])
+
     def blind_spot(self, source_id, neighbors, rel_pos):
         r_blockage = 25 # 50mm blocking corridor behind itself
         vel = self.environment.node_vel[source_id]
@@ -108,8 +113,7 @@ class Interaction():
 
                 theta_min = math.atan(r_sphere / d_verified)
 
-                theta = abs(math.acos(np.dot(coord_neighbor, coord_verified)
-                    / (d_neighbor * d_verified)))
+                theta = abs(math.acos(np.dot(coord_neighbor, coord_verified) / (d_neighbor * d_verified)))
 
                 if theta < theta_min:
                     occluded = True
@@ -145,7 +149,8 @@ class Interaction():
         final_pos[1] = np.clip(final_pos[1], 0, self.environment.arena_size[1])
         final_pos[2] = np.clip(final_pos[2], 0, self.environment.arena_size[2])
 
-        self.environment.set_vel(source_id, node_pos, final_pos)
+        #self.environment.set_vel(source_id, node_pos, final_pos) #xx
+        #print(final_pos)
         self.environment.set_pos(source_id, final_pos)
 
         if self.verbose:

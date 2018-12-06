@@ -79,6 +79,7 @@ def generate_fish(
     n,
     channel,
     interaction,
+    dynamics,
     target_dist,
     lim_neighbors,
     neighbor_weights=None,
@@ -124,6 +125,7 @@ def generate_fish(
             id=i,
             channel=channel,
             interaction=interaction,
+            dynamics=dynamics,
             target_dist=target_dist,
             lim_neighbors=lim_neighbors,
             neighbor_weight=neighbor_weights[i],
@@ -260,6 +262,7 @@ def run_simulation(
         print('It\'s time to say bye bye!')
 
         observer.stop()
+        #xx comment subsequent lines
         # observer.plot(
         #      dark=dark,
         #      white_axis=white_axis,
@@ -279,4 +282,4 @@ def run_simulation(
 
     # Ciao stops run time
     threading.Timer(run_time, stop).start()
-    observer_thread.join()
+    observer_thread.join() #xx uncomment
