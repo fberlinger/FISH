@@ -20,6 +20,8 @@ class Environment():
         arena_size,
         node_pos,
         node_vel,
+        node_phi,
+        node_vphi,
         distortion,
         prob_type='quadratic',
         conn_thres=math.inf,
@@ -54,6 +56,9 @@ class Environment():
         self.arena_size = arena_size
         self.node_pos = node_pos
         self.node_vel = node_vel
+        self.node_phi = node_phi
+        self.node_vphi = node_vphi
+
         self.distortion = distortion
         self.conn_thres = conn_thres
         self.conn_drop = conn_drop
@@ -67,7 +72,6 @@ class Environment():
         self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, self.arena_size[1])
         self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, self.arena_size[2])
 
-        self.num_nodes = node_pos.size
         self.update_distance()
 
     def get_distorted_pos(self, source_index, target_pos):
@@ -92,7 +96,7 @@ class Environment():
             np.random.rand(3,) * 2 - np.ones((3,))
         ) * self.noise_magnitude
 
-        return target_pos + self.distortion[math.floor(indices[0]/10), math.floor(indices[1]/10)] + noise
+        return target_pos + noise #self.distortion[math.floor(indices[0]/10), math.floor(indices[1]/10)] #xx
 
     def set_pos(self, source_index, new_pos):
         """Set the new position
