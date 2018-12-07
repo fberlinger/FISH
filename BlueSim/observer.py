@@ -1,6 +1,7 @@
 import numpy as np
 from queue import Queue, PriorityQueue
 import time
+import math
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
@@ -363,9 +364,17 @@ class Observer():
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
             self.z[i].append(self.environment.node_pos[i, 2])
-            self.vx[i].append(self.environment.node_vel[i, 0])
-            self.vy[i].append(self.environment.node_vel[i, 1])
-            self.vz[i].append(self.environment.node_vel[i, 2])
+            if self.environment.node_vel[i, 0] == 0: #xx
+                self.vx[i].append(math.cos(self.environment.node_phi[i]))
+            else:
+                self.vx[i].append(self.environment.node_vel[i, 0])
+
+            if self.environment.node_vel[i, 1] == 0: #xx
+                self.vy[i].append(math.sin(self.environment.node_phi[i]))
+            else:
+                self.vy[i].append(self.environment.node_vel[i, 1])
+            #self.vz[i].append(self.environment.node_vel[i, 2])
+            self.vz[i].append(0)
 
             n = len(self.fish[i].neighbors)
 

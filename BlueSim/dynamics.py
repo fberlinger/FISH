@@ -8,7 +8,7 @@ class Dynamics():
         self.environment = environment
 
         # Simulation Step and Time
-        self.deltat = 0.1 # [s]
+        self.deltat = 0.01 # [s]
         self.t_simu = 1 / clock_freq # [s]
 
         # Robot Specs
@@ -49,12 +49,15 @@ class Dynamics():
 
     def simulate_move(self, source_id):
         g_P_r = np.zeros((3,))
-        r_Pdot_r = 1/1000 * self.environment.node_vel[source_id] #xx
+        g_Pdot_r = 1/1000 * self.environment.node_vel[source_id]
+        phi = self.environment.node_phi[source_id]
+        vphi = self.environment.node_vphi[source_id]
+
+        r_T_g = np.array([[cos(phi), sin(phi), 0], [-sin(phi), cos(phi), 0], [0, 0, 1]])
+        r_Pdot_r = r_T_g @ g_Pdot_r #xx
         vx = r_Pdot_r[0] #xx
         vy = r_Pdot_r[1]
         vz = r_Pdot_r[2]
-        phi = self.environment.node_phi[source_id]
-        vphi = self.environment.node_vphi[source_id]
 
         for t in range(int(self.t_simu*1/self.deltat)):
             # Equations of Motion
@@ -66,7 +69,7 @@ class Dynamics():
             vx_dot = 1/self.m_robot * (self.F_caud - sin(self.pect_angle)*self.F_PL - sin(self.pect_angle)*self.F_PR - 1/2*self.rho*self.C_dx*self.A_x*np.sign(x_dot)*x_dot**2)
             vy_dot = 1/self.m_robot * (cos(self.pect_angle)*self.F_PL - cos(self.pect_angle)*self.F_PR - 1/2*self.rho*self.C_dy*self.A_y*np.sign(y_dot)*y_dot**2)
             vz_dot = 1/self.m_robot * (self.F_dors - self.F_buoy - 1/2*self.rho*self.C_dz*self.A_z*np.sign(z_dot)*z_dot**2)
-            vphi_dot = 1/self.I_robot * (self.pect_dist*cos(self.pect_angle)*self.F_PL - self.pect_dist*cos(self.pect_angle)*self.F_PR - 1/2*self.rho*self.C_dphi*self.A_phi*np.sign(phi_dot)*(self.l_robot/10*phi_dot)**2)
+            vphi_dot = 1/self.I_robot * (self.pect_dist*cos(self.pect_angle)*self.F_PL - self.pect_dist*cos(self.pect_angle)*self.F_PR - 1/2*self.rho*self.C_dphi*self.A_phi*np.sign(phi_dot)*(self.l_robot/6*phi_dot)**2)
 
             # Euler Integration
             vx = x_dot + self.deltat*vx_dot
@@ -81,7 +84,7 @@ class Dynamics():
             g_Pdot_r = g_T_r @ np.array([vx, vy, vz])
             g_P_r = g_P_r + self.deltat*np.transpose(g_Pdot_r)
 
-        self.environment.node_vel[source_id] = 1000* np.array([vx, vy, vz]) #xx
+        self.environment.node_vel[source_id] = 1000 * g_Pdot_r #xx
         self.environment.node_phi[source_id] = phi
         self.environment.node_vphi[source_id] = vphi
 

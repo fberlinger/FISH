@@ -87,6 +87,8 @@ class Fish():
 
         self.status = None
 
+        self.behavior = 'home' ##x
+
         self.info = None  # Some information
         self.info_clock = 0  # Time stamp of the information, i.e., the clock
         self.info_hops = 0  # Number of hops until the information arrived
@@ -447,23 +449,66 @@ class Fish():
 
         # target to the right
         if heading > 0:
-            self.pect_l = min(1, 0.2 + abs(heading) / 180)
+            self.pect_l = min(1, 0.6 + abs(heading) / 180)
             self.pect_r = 0
 
             if heading < caudal_range:
-                self.caudal = min(1, 0.2 + np.linalg.norm(r_move_g[0:2])/(5*self.body_length))
+                self.caudal = min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
 
         # target to the left
         else:
-            self.pect_r = min(1, 0.2 + abs(heading) / 180)
+            self.pect_r = min(1, 0.6 + abs(heading) / 180)
             self.pect_l = 0
 
             if heading > -caudal_range:
-                self.caudal = min(1, 0.2 + np.linalg.norm(r_move_g[0:2])/(5*self.body_length))
+                self.caudal = min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
+
+    def transition(self, r_move_g):
+        """Transitions between homing and orbiting. Uses pectoral right fin to align tangentially with the orbit.
+        """
+        self.caudal = 0
+        self.pect_l = 0
+        self.pect_r = 1
+
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        if heading > 45:
+            self.pect_r = 0
+            self.behavior = 'orbit'
+
+    def orbit(self, r_move_g, target_dist):
+        """Orbits an object, e.g. two vertically stacked LEDs, at a predefined radius
+        Uses four zones to control the orbit with pectoral and caudal fins. The problem is reduced to 2D and depth control is handled separately.
+        Could make fin frequencies dependent on distance and heading, i.e., use proportianl control.
+
+        Args:
+            target_dist (int): Target orbiting radius, [mm]
+        """
+        dist = np.linalg.norm(r_move_g[0:2]) # 2D, ignoring z
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        if dist > target_dist:
+            if heading < 90:
+                self.caudal = 0.4
+                self.pect_l = 0
+                self.pect_r = 0
+            else:
+                self.caudal = 0.25
+                self.pect_l = 1
+                self.pect_r = 0
+        else:
+            if heading < 90:
+                self.caudal = 0.4
+                self.pect_l = 0
+                self.pect_r = 1
+            else:
+                self.caudal = 0.4
+                self.pect_l = 0
+                self.pect_r = 0
 
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
@@ -494,7 +539,22 @@ class Fish():
 
         # Simulate dynamics and restrict movement #xx
         self.depth_ctrl(r_move_g)
-        self.home(r_move_g)
+        #self.home(r_move_g)
+
+        # Single fish orbiting #################################################
+        target_dist = 500
+
+        if self.behavior == 'home':
+            dist_filtered = np.linalg.norm(r_move_g)
+            if dist_filtered < target_dist * 1.6:
+                self.behavior = 'transition'
+            else:
+                self.home(r_move_g)
+        elif self.behavior == 'transition':
+            self.transition(r_move_g)
+        elif self.behavior == 'orbit':
+            self.orbit(r_move_g, target_dist)
+        # Single fish orbiting #################################################
 
         self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
         final_move = self.dynamics.simulate_move(self.id)
