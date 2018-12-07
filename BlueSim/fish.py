@@ -76,6 +76,7 @@ class Fish():
         self.dorsal = 0
         self.pect_r = 0
         self.pect_l = 0
+        self.target_depth = 0
 
         self.body_length = 130
         self.clock_speed = 1 / self.clock_freq
@@ -442,8 +443,19 @@ class Fish():
         elif pitch < -1:
             self.dorsal = 0
 
+    def depth_waltz(self, r_move_g):
+        depth = self.interaction.perceive_depth(self.id)
+
+        if self.target_depth == 0:
+            self.target_depth = depth + r_move_g[2] / 2
+
+        if depth > self.target_depth:
+            self.dorsal = 0
+        else:
+            self.dorsal = 1
+
     def home(self, r_move_g):
-        caudal_range = 20 # abs(heading) below which caudal fin is swithed on
+        caudal_range = 20 # abs(heading) below which caudal fin is switched on
 
         heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
 
@@ -466,6 +478,31 @@ class Fish():
                 self.caudal = min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
+
+    def collisions(self, r_move_g):
+        caudal_range = 20 # abs(heading) below which caudal fin is switched on
+
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        # target to the right
+        if heading > 0:
+            self.pect_l += min(1, 0.6 + abs(heading) / 180)
+            self.pect_r += 0
+
+            if heading < caudal_range:
+                self.caudal += min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+            else:
+                self.caudal += 0
+
+        # target to the left
+        else:
+            self.pect_r += min(1, 0.6 + abs(heading) / 180)
+            self.pect_l += 0
+
+            if heading > -caudal_range:
+                self.caudal += min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+            else:
+                self.caudal += 0
 
     def transition(self, r_move_g):
         """Transitions between homing and orbiting. Uses pectoral right fin to align tangentially with the orbit.
@@ -530,19 +567,23 @@ class Fish():
 
         # Get the relative direction to the centroid of the swarm
         centroid_pos = self.lj_force(neighbors, rel_pos)
+        #centroid_pos = self.comp_center(rel_pos)
 
-        move = self.target_pos + centroid_pos
+        move = self.target_pos# + centroid_pos
 
         # Global to Robot Transformation
         r_T_g = self.interaction.rot_global_to_robot(self.id)
         r_move_g = r_T_g @ move
 
+        obstacle_avoidance = r_T_g @ centroid_pos
+
         # Simulate dynamics and restrict movement #xx
         self.depth_ctrl(r_move_g)
+        #self.depth_waltz(r_move_g)
         #self.home(r_move_g)
 
         # Single fish orbiting #################################################
-        target_dist = 500
+        target_dist = 600
 
         if self.behavior == 'home':
             dist_filtered = np.linalg.norm(r_move_g)
@@ -555,6 +596,8 @@ class Fish():
         elif self.behavior == 'orbit':
             self.orbit(r_move_g, target_dist)
         # Single fish orbiting #################################################
+
+        self.collisions(obstacle_avoidance)
 
         self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
         final_move = self.dynamics.simulate_move(self.id)

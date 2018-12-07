@@ -17,18 +17,20 @@ class Dynamics():
         self.w_robot = 0.050 # [m]
         self.h_robot = 0.080 # [m]
         self.A_x = pi/4 * self.h_robot * self.w_robot # [m**2]
-        self.A_y = pi/4 * self.l_robot * self.h_robot # [m**2]
+        self.A_y = pi/4 * self.l_robot * self.h_robot + 2 * 0.00075 # [m**2], including fins
         self.A_z = pi/4 * self.l_robot * self.w_robot # [m**2]
         self.A_phi = self.A_y
         self.m_robot = 2*0.25 # [kg], including added mass
         self.I_robot = self.m_robot/5 * 1/4*(self.l_robot**2 + self.h_robot**2) # [kg*m**2]
-        self.C_dx = 0.5
-        self.C_dy = 5.0
-        self.C_dz = 0.9
-        self.C_dphi = 1.2
+        self.C_dx_fwd = 0.5 # c.f. cone
+        self.C_dx_bwd = 1.0 # c.f. cone
+        self.C_dy_static = 2.1 # c.f. flat plate
+        self.C_dz = 0.7
+        self.C_dphi_static = 1.0
         self.pect_dist = 0.055 # [m]
         self.pect_angle = pi / 6 # [rad]
-        self.F_buoy = 0.011 # [N]
+        self.F_buoy = 0.010 # [N]
+        self.vx_max = 0.160 # [m/s]
 
         # Initialize Control
         self.F_caud = 0 # [N]
@@ -37,10 +39,10 @@ class Dynamics():
         self.F_dors = 0 # [N]
 
     def update_ctrl(self, dorsal, caudal, pect_r, pect_l):
-        F_caud_max = 0.022 # [N]
-        F_PR_max = 0.010 # [N]
-        F_PL_max = 0.010 # [N]
-        F_dors_max = 0.022 # [N]
+        F_caud_max = 0.020 # [N]
+        F_PR_max = 0.006 # [N]
+        F_PL_max = 0.006 # [N]
+        F_dors_max = 0.020 # [N]
 
         self.F_caud = caudal * F_caud_max
         self.F_PR = pect_r * F_PR_max
@@ -65,6 +67,13 @@ class Dynamics():
             y_dot = vy
             z_dot = vz
             phi_dot = vphi
+
+            self.C_dphi = self.C_dphi_static + self.C_dphi_static * 9 * abs(x_dot) / self.vx_max
+            self.C_dy = self.C_dy_static + self.C_dy_static * 4 * abs(x_dot) / self.vx_max
+            if x_dot > 0:
+                self.C_dx = self.C_dx_fwd
+            else:
+                self.C_dx = self.C_dx_bwd
 
             vx_dot = 1/self.m_robot * (self.F_caud - sin(self.pect_angle)*self.F_PL - sin(self.pect_angle)*self.F_PR - 1/2*self.rho*self.C_dx*self.A_x*np.sign(x_dot)*x_dot**2)
             vy_dot = 1/self.m_robot * (cos(self.pect_angle)*self.F_PL - cos(self.pect_angle)*self.F_PR - 1/2*self.rho*self.C_dy*self.A_y*np.sign(y_dot)*y_dot**2)

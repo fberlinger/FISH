@@ -63,6 +63,11 @@ class Interaction():
         else:
             return np.zeros((3,))
 
+    def perceive_depth(self, source_id):
+        pos = self.environment.node_pos[source_id]
+
+        return pos[2]
+
     def rot_global_to_robot(self, source_id):
         phi = self.environment.node_phi[source_id]
 
