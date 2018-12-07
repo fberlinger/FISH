@@ -56,6 +56,10 @@ def generate_distortion(type='linear', n=10, show=False):
 def generate_fish(
     n,
     channel,
+    orientation,
+    tolerance,
+    formation_num, 
+    fish_total_error,
     interaction,
     lim_neighbors,
     neighbor_weights=None,
@@ -101,6 +105,10 @@ def generate_fish(
             id=i,
             channel=channel,
             interaction=interaction,
+            orientation= orientation,
+            tolerance = tolerance,
+            formation_num=formation_num, 
+            fish_total_error = fish_total_error,
             lim_neighbors=lim_neighbors,
             neighbor_weight=neighbor_weights[i],
             fish_max_speed=fish_max_speeds[i],
@@ -172,6 +180,7 @@ def init_simulation(
     distortion = generate_distortion(type=dist_type, n=size_dist)
     environment = Environment(
         node_pos=fish_pos,
+        arena_size= arena_size,
         distortion=distortion,
         prob_type=prob_type,
         noise_magnitude=noise_magnitude,
@@ -186,6 +195,10 @@ def init_simulation(
         n=num_fish,
         channel=channel,
         interaction=interaction,
+        orientation= orientation,
+        tolerance = tolerance, 
+        formation_num= formation_num, 
+        fish_total_error=fish_total_error,
         lim_neighbors=lim_neighbors,
         neighbor_weights=neighbor_weights,
         fish_max_speeds=fish_max_speeds,
@@ -203,7 +216,7 @@ def init_simulation(
     )
     channel.intercept(observer)
 
-    return channel, environment, fish, interaction, observer
+    return channel, environment, fish, interaction, observer 
 
 
 def run_simulation(

@@ -18,6 +18,7 @@ class Environment():
     def __init__(
         self,
         node_pos,
+        arena_size,
         distortion,
         prob_type='quadratic',
         conn_thres=math.inf,
@@ -50,6 +51,7 @@ class Environment():
         """
         # Params
         self.node_pos = node_pos
+        self.arena_size = arena_size
         self.distortion = distortion
         self.conn_thres = conn_thres
         self.conn_drop = conn_drop
@@ -60,7 +62,8 @@ class Environment():
         # Init
         self.num_nodes = node_pos.size
         self.update_distance()
-
+        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, self.arena_size[0])
+        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, self.arena_size[1])
     def get_distorted_pos(self, source_index, target_pos):
         """Calculate the distorted target position of a node.
 
@@ -77,12 +80,13 @@ class Environment():
         """
         # Get indices for the distortion vector field
         indices = target_pos.astype(int)
-
+        #indices[0] = np.clip(indices[0], 0 , self.arena_size[0])
+        #indices[1] = np.clip(indices[1], 0 , self.arena_size[0])
         # Simulate random noise in [-1,1]
         noise = (
             np.random.rand(2,) * 2 - np.ones((2,))
         ) * self.noise_magnitude
-
+        
         return target_pos + self.distortion[indices[0], indices[1]] + noise
 
     def set_pos(self, source_index, new_pos):

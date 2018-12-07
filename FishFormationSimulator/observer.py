@@ -67,6 +67,7 @@ class Observer():
         self.environment = environment
         self.fish = fish
         self.channel = channel
+      
         self.clock_freq = clock_freq
         self.object = np.zeros((2, 1))
         self.fish_pos = fish_pos
@@ -80,6 +81,7 @@ class Observer():
         self.c = []
         self.status = []
         self.reset = False
+        self.total_error = []
 
         self.node_colors = []
         for i in range(self.num_nodes):
@@ -354,11 +356,11 @@ class Observer():
 
         self.check_transmissions()
         self.check_instructions()
-
+        fish_total_error = 0
         for i in range(self.num_nodes):
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
-
+            fish_total_error += self.fish[i].fish_total_error
             n = len(self.fish[i].neighbors)
 
             if n < self.fish[i].lim_neighbors[0]:
@@ -367,7 +369,8 @@ class Observer():
                 self.status[i].append(1)
             else:
                 self.status[i].append(0)
-
+        print("total_error", fish_total_error/self.num_nodes)
+        self.total_error.append(fish_total_error)
         self.clock += 1
 
     def animate_plot(self):
