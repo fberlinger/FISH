@@ -1,5 +1,7 @@
 # FISH: Formation of Intelligent Swarming Habits
 
+Bla bla Project Explanation
+
 ## Requirements
 
 - Python 3.6
