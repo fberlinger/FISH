@@ -30,7 +30,7 @@ Do not run any cells generating the animation if you have not installed ipyvolum
 
 Sit back and watch the extravaganza!
 
-
+<!---
 <> ## Upload Code for an Experiment on the Virtual BlueBots
 
 <> Go to the subfolder `fishfood` and copy one of the following files ending in `.py` to the current `BlueSim` folder:
@@ -48,3 +48,4 @@ Sit back and watch the extravaganza!
 <> ```
 
 <> and within that notebook open the corresponding file ending in `.ipynb`.
+-->
