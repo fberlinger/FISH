@@ -80,6 +80,8 @@ class Observer():
         self.vx = []
         self.vy = []
         self.vz = []
+        self.v_mean = []
+        self.d_mean = []
         self.c = []
         self.status = []
         self.reset = False
@@ -360,21 +362,32 @@ class Observer():
         self.check_transmissions()
         self.check_instructions()
 
+        # mean swarm speed for evaluation of aggregation/dispersion
+        d_mean = 0
+        #v_mean = 0
+
         for i in range(self.num_nodes):
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
             self.z[i].append(self.environment.node_pos[i, 2])
-            if self.environment.node_vel[i, 0] == 0: #xx
-                self.vx[i].append(math.cos(self.environment.node_phi[i]))
-            else:
-                self.vx[i].append(self.environment.node_vel[i, 0])
 
-            if self.environment.node_vel[i, 1] == 0: #xx
-                self.vy[i].append(math.sin(self.environment.node_phi[i]))
-            else:
-                self.vy[i].append(self.environment.node_vel[i, 1])
+            # ipyvolume quiver does not plot elements with zero velocity
+            #if self.environment.node_vel[i, 0] == 0: #xx
+            #    self.vx[i].append(math.cos(self.environment.node_phi[i]))
+            #else:
+            self.vx[i].append(self.environment.node_vel[i, 0])
+
+            #if self.environment.node_vel[i, 1] == 0: #xx
+            #    self.vy[i].append(math.sin(self.environment.node_phi[i]))
+            #else:
+            self.vy[i].append(self.environment.node_vel[i, 1])
+
+            # fish should be neutral pitch in animations > vz = 0
             #self.vz[i].append(self.environment.node_vel[i, 2])
             self.vz[i].append(0)
+
+            d_mean += self.fish[i].d_center
+            #v_mean += math.sqrt(self.vx[i]**2 + self.vy[i]**2 + self.vz[i]**2)
 
             n = len(self.fish[i].neighbors)
 
@@ -384,6 +397,9 @@ class Observer():
                 self.status[i].append(1)
             else:
                 self.status[i].append(0)
+
+        self.d_mean.append(d_mean/self.num_nodes)
+        #self.v_mean.append(v_mean/self.num_nodes)
 
         self.clock += 1
 

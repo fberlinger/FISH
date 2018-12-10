@@ -8,7 +8,7 @@ class Dynamics():
         self.environment = environment
 
         # Simulation Step and Time
-        self.deltat = 0.01 # [s]
+        self.deltat = 0.1 # [s]
         self.t_simu = 1 / clock_freq # [s]
 
         # Robot Specs

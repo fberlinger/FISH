@@ -78,6 +78,7 @@ class Fish():
         self.pect_l = 0
         self.target_depth = 0
 
+        self.d_center = 0
         self.body_length = 130
         self.clock_speed = 1 / self.clock_freq
         self.clock = 0
@@ -465,7 +466,7 @@ class Fish():
             self.pect_r = 0
 
             if heading < caudal_range:
-                self.caudal = min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
 
@@ -475,7 +476,7 @@ class Fish():
             self.pect_l = 0
 
             if heading > -caudal_range:
-                self.caudal = min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
 
@@ -486,23 +487,17 @@ class Fish():
 
         # target to the right
         if heading > 0:
-            self.pect_l += min(1, 0.6 + abs(heading) / 180)
-            self.pect_r += 0
+            self.pect_l = min(1, 0.6 + abs(heading) / 180)
 
             if heading < caudal_range:
-                self.caudal += min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
-            else:
-                self.caudal += 0
+                self.caudal = min(self.caudal+0.5, self.caudal+0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
 
         # target to the left
         else:
             self.pect_r += min(1, 0.6 + abs(heading) / 180)
-            self.pect_l += 0
 
             if heading > -caudal_range:
-                self.caudal += min(0.5, 0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
-            else:
-                self.caudal += 0
+                self.caudal = min(self.caudal+0.5, self.caudal+0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
 
     def transition(self, r_move_g):
         """Transitions between homing and orbiting. Uses pectoral right fin to align tangentially with the orbit.
@@ -513,7 +508,7 @@ class Fish():
 
         heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
 
-        if heading > 45:
+        if heading > 35:
             self.pect_r = 0
             self.behavior = 'orbit'
 
@@ -530,20 +525,20 @@ class Fish():
 
         if dist > target_dist:
             if heading < 90:
-                self.caudal = 0.4
+                self.caudal = 0.45
                 self.pect_l = 0
                 self.pect_r = 0
             else:
-                self.caudal = 0.25
+                self.caudal = 0.3
                 self.pect_l = 1
                 self.pect_r = 0
         else:
             if heading < 90:
-                self.caudal = 0.4
+                self.caudal = 0.45
                 self.pect_l = 0
                 self.pect_r = 1
             else:
-                self.caudal = 0.4
+                self.caudal = 0.45
                 self.pect_l = 0
                 self.pect_r = 0
 
@@ -566,8 +561,8 @@ class Fish():
         centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
-        centroid_pos = self.lj_force(neighbors, rel_pos)
-        #centroid_pos = self.comp_center(rel_pos)
+        #centroid_pos = self.lj_force(neighbors, rel_pos)
+        #self.d_center = np.linalg.norm(self.comp_center(rel_pos))
 
         move = self.target_pos# + centroid_pos
 
@@ -575,7 +570,7 @@ class Fish():
         r_T_g = self.interaction.rot_global_to_robot(self.id)
         r_move_g = r_T_g @ move
 
-        obstacle_avoidance = r_T_g @ centroid_pos
+        #obstacle_avoidance = r_T_g @ centroid_pos
 
         # Simulate dynamics and restrict movement #xx
         self.depth_ctrl(r_move_g)
@@ -583,11 +578,11 @@ class Fish():
         #self.home(r_move_g)
 
         # Single fish orbiting #################################################
-        target_dist = 600
+        target_dist = 400
 
         if self.behavior == 'home':
             dist_filtered = np.linalg.norm(r_move_g)
-            if dist_filtered < target_dist * 1.6:
+            if dist_filtered < target_dist * 1.2:
                 self.behavior = 'transition'
             else:
                 self.home(r_move_g)
@@ -597,7 +592,7 @@ class Fish():
             self.orbit(r_move_g, target_dist)
         # Single fish orbiting #################################################
 
-        self.collisions(obstacle_avoidance)
+        #self.collisions(obstacle_avoidance)
 
         self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
         final_move = self.dynamics.simulate_move(self.id)
