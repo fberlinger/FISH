@@ -1,10 +1,22 @@
+"""Helper class to simulate the dynamics of BlueBot. Simulation step should be set according to swarm size. Large numbers of robots require larger steps. This can be automated in the future.
+"""
 from math import *
 import numpy as np
 
 
 class Dynamics():
 
+    """Simulates the dynamics of BlueBot with Euler integration according to its equations of motion.
+
+    """
+    
     def __init__(self, environment, clock_freq=1):
+        """Constructor
+        
+        Args:
+            environment (class): For global positions
+            clock_freq (int, optional): For integration time
+        """
         self.environment = environment
 
         # Simulation Step and Time
@@ -39,6 +51,14 @@ class Dynamics():
         self.F_dors = 0 # [N]
 
     def update_ctrl(self, dorsal, caudal, pect_r, pect_l):
+        """Update BlueBots fin control. Those thrust forces are then used in the equations of motion.
+        
+        Args:
+            dorsal (float): Dorsal gain
+            caudal (float): Caudal gain
+            pect_r (float): Pectoral right gain
+            pect_l (float): Pectoral left gain
+        """
         F_caud_max = 0.020 # [N]
         F_PR_max = 0.006 # [N]
         F_PL_max = 0.006 # [N]
@@ -47,17 +67,28 @@ class Dynamics():
         self.F_caud = caudal * F_caud_max
         self.F_PR = pect_r * F_PR_max
         self.F_PL = pect_l * F_PL_max
-        self.F_dors = dorsal * F_dors_max #xx change dorsal
+        self.F_dors = dorsal * F_dors_max
 
     def simulate_move(self, source_id):
+        """Simulates move starting from current global coordinates based on current velocities and fin control. Returns next global coordinates.
+        
+        Args:
+            source_id (int): Fish ID
+        
+        Returns:
+            np.array: 3D global next position
+        """
+        mm_to_m = 1/1000
+        m_to_mm = 1000
+
         g_P_r = np.zeros((3,))
-        g_Pdot_r = 1/1000 * self.environment.node_vel[source_id]
+        g_Pdot_r = mm_to_m * self.environment.node_vel[source_id]
         phi = self.environment.node_phi[source_id]
         vphi = self.environment.node_vphi[source_id]
 
         r_T_g = np.array([[cos(phi), sin(phi), 0], [-sin(phi), cos(phi), 0], [0, 0, 1]])
-        r_Pdot_r = r_T_g @ g_Pdot_r #xx
-        vx = r_Pdot_r[0] #xx
+        r_Pdot_r = r_T_g @ g_Pdot_r
+        vx = r_Pdot_r[0]
         vy = r_Pdot_r[1]
         vz = r_Pdot_r[2]
 
@@ -93,11 +124,9 @@ class Dynamics():
             g_Pdot_r = g_T_r @ np.array([vx, vy, vz])
             g_P_r = g_P_r + self.deltat*np.transpose(g_Pdot_r)
 
-        self.environment.node_vel[source_id] = 1000 * g_Pdot_r #xx
+        self.environment.node_vel[source_id] = m_to_mm * g_Pdot_r
         self.environment.node_phi[source_id] = phi
         self.environment.node_vphi[source_id] = vphi
 
-        #print(self.environment.node_vel[source_id])
-
-        return 1000* g_P_r #xx
+        return m_to_mm * g_P_r
 
