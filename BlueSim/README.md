@@ -31,21 +31,21 @@ Do not run any cells generating the animation if you have not installed ipyvolum
 Sit back and watch the extravaganza!
 
 <!---
-<> ## Upload Code for an Experiment on the Virtual BlueBots
+## Upload Code for an Experiment on the Virtual BlueBots
 
-<> Go to the subfolder `fishfood` and copy one of the following files ending in `.py` to the current `BlueSim` folder:
+Go to the subfolder `fishfood` and copy one of the following files ending in `.py` to the current `BlueSim` folder:
 
-<> - `millingabout.py`
+- `millingabout.py`
 
-<> Rename that file to `fish.py`.
+Rename that file to `fish.py`.
 
-<> ## Run an Experiment with Simulated BlueBots
+## Run an Experiment with Simulated BlueBots
 
-<> Open the jupyter notebook:
+Open the jupyter notebook:
 
-<> ```
-<> jupyter notebook
-<> ```
+```
+jupyter notebook
+```
 
-<> and within that notebook open the corresponding file ending in `.ipynb`.
+and within that notebook open the corresponding file ending in `.ipynb`.
 -->
