@@ -10,7 +10,7 @@ Bla bla Project Explanation
 
 Manually following instructions on https://github.com/maartenbreddels/ipyvolume.
 
-## Upload code for an experiment on the virtual BlueBots
+## Upload Code for an Experiment on the Virtual BlueBots
 
 Go to the subfolder `fishfood` and copy one of the following files ending in `.py` to the current `BlueSim` folder:
 
@@ -18,7 +18,7 @@ Go to the subfolder `fishfood` and copy one of the following files ending in `.p
 
 Rename that file to `fish.py`.
 
-## Run an experiment with simulated BlueBots
+## Run an Experiment with Simulated BlueBots
 
 Open the jupyter notebook:
 
