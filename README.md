@@ -24,17 +24,4 @@ Or manually via https://jupyter.org/install and https://scipy.org/install.html
 
 ## Run
 
-Open the jupyter notebook:
-
-```
-jupyter notebook
-```
-
-and within that notebook open one of the following files ending in `.ipynb`:
-
-- `example1.ipynb`
-- `example2.ipynb`
-
-Please run each cell individually! **Warning**: Using `Run All` will not work
-as the experiments start several threads for every fish and the code execution
-async, hence, Jupyter Notebook runs new cells to quickly before others finished.
+Move to one of the project folders (BlueSim, TuringFish, FishFormationSimulator) and follow the local instructions.
