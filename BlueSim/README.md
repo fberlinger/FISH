@@ -22,6 +22,8 @@ Rename the copied file in `BlueSim` to `fish.py`.
 
 ## Run an Experiment with Simulated BlueBots
 
+BlueSim will run your selected experiment that you copied and renamed to `fish.py`.
+
 Open the jupyter notebook:
 
 ```
