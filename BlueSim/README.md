@@ -14,9 +14,9 @@ Manually following instructions on https://github.com/maartenbreddels/ipyvolume.
 
 Go to the subfolder `fishfood`, choose one of the following experiments, and copy its file ending in `.py` to the current `BlueSim` folder:
 
-- A single robot orbits around a fixed center: `orbit.py`
-- Several robots orbit around a fixed center: `millingabout.py`
-- Two robots orbit around each other: `waltz.py`
+- `orbit.py`: A single robot orbits around a fixed center.
+- `millingabout.py`: Several robots orbit around a fixed center.
+- `waltz.py`: Two robots orbit around each other.
 
 Rename that file to `fish.py`.
 
