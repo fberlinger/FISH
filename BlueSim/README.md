@@ -14,6 +14,8 @@ Manually following instructions on https://github.com/maartenbreddels/ipyvolume.
 
 Go to the subfolder `fishfood`, choose one of the following experiments, and copy its file ending in `.py` to the current `BlueSim` folder:
 
+- `blindspot.py`: An investigation on how the blind spot behind its own body affects BlueBot's dispersion.
+- `blockingsphere.py`: An investigation on how the blocking sphere surrounding its own body affects BlueBot's aggregation.
 - `orbit.py`: A single robot orbits around a fixed center.
 - `millingabout.py`: Several robots orbit around a fixed center.
 - `waltz.py`: Two robots orbit around each other.
