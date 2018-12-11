@@ -12,9 +12,11 @@ Manually following instructions on https://github.com/maartenbreddels/ipyvolume.
 
 ## Upload Code for an Experiment on the Virtual BlueBots
 
-Go to the subfolder `fishfood` and copy one of the following files ending in `.py` to the current `BlueSim` folder:
+Go to the subfolder `fishfood`, choose one of the following experiments, and copy its file ending in `.py` to the current `BlueSim` folder:
 
-- `millingabout.py`
+- A single robot orbits around a fixed center: `orbit.py`
+- Several robots orbit around a fixed center: `millingabout.py`
+- Two robots orbit around each other: `waltz.py`
 
 Rename that file to `fish.py`.
 
@@ -26,7 +28,7 @@ Open the jupyter notebook:
 jupyter notebook
 ```
 
-and within that notebook open the corresponding file ending in `.ipynb`.
+and within that notebook open the file ending in `.ipynb` corresponding to your chosen experiment.
 
 Please run each cell individually! **Warning**: Using `Run All` will not work
 as the experiments start several threads for every fish and the code execution
