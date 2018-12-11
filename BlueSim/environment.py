@@ -17,7 +17,11 @@ class Environment():
 
     def __init__(
         self,
+        arena_size,
         node_pos,
+        node_vel,
+        node_phi,
+        node_vphi,
         distortion,
         prob_type='quadratic',
         conn_thres=math.inf,
@@ -49,7 +53,12 @@ class Environment():
                 simulation (default: {False})
         """
         # Params
+        self.arena_size = arena_size
         self.node_pos = node_pos
+        self.node_vel = node_vel
+        self.node_phi = node_phi
+        self.node_vphi = node_vphi
+
         self.distortion = distortion
         self.conn_thres = conn_thres
         self.conn_drop = conn_drop
@@ -59,11 +68,10 @@ class Environment():
 
         # Init
         # restrict to tank
-        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, 177)
-        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, 177)
-        self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, 116)
+        self.node_pos[:,0] = np.clip(self.node_pos[:,0], 0, self.arena_size[0])
+        self.node_pos[:,1] = np.clip(self.node_pos[:,1], 0, self.arena_size[1])
+        self.node_pos[:,2] = np.clip(self.node_pos[:,2], 0, self.arena_size[2])
 
-        self.num_nodes = node_pos.size
         self.update_distance()
 
     def get_distorted_pos(self, source_index, target_pos):
@@ -88,7 +96,7 @@ class Environment():
             np.random.rand(3,) * 2 - np.ones((3,))
         ) * self.noise_magnitude
 
-        return target_pos + self.distortion[indices[0], indices[1], indices[2]] + noise
+        return target_pos + noise #self.distortion[math.floor(indices[0]/10), math.floor(indices[1]/10)] #xx
 
     def set_pos(self, source_index, new_pos):
         """Set the new position
@@ -108,6 +116,16 @@ class Environment():
             print('Env: {} is now at {}'.format(
                 source_index, new_pos, self.node_pos
             ))
+
+    # def set_vel(self, source_index, old_pos, new_pos): #xx
+    #     """Sets velocity of fish. Used to find orientation for blind spot in (old) vision experiments.
+
+    #     Args:
+    #         source_index (id): Fish ID
+    #         old_pos (list): 3D coordinates of old position
+    #         new_pos (list): 3D coordinates of new position
+    #     """
+    #     self.node_vel[source_index] = new_pos - old_pos
 
     def update_distance(self):
         """Calculate pairwise distances of every node

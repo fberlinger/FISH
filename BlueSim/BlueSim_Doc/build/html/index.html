@@ -1,0 +1,340 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Welcome to BlueSim’s documentation! &#8212; BlueSim 0.0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-bluesim-s-documentation">
+<h1>Welcome to BlueSim’s documentation!<a class="headerlink" href="#welcome-to-bluesim-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+</div>
+<div class="section" id="module-fish">
+<span id="fish"></span><h1>fish<a class="headerlink" href="#module-fish" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="fish.Fish">
+<em class="property">class </em><code class="descclassname">fish.</code><code class="descname">Fish</code><span class="sig-paren">(</span><em>id, channel, interaction, lim_neighbors=[0, inf], fish_max_speed=1, clock_freq=1, neighbor_weight=1.0, name='Unnamed', verbose=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish" title="Permalink to this definition">¶</a></dt>
+<dd><p>This class models each fish robot node in the network from the fish’
+perspective.</p>
+<p>Each fish has an ID, communicates over the channel, and perceives its
+neighbors and takes actions accordingly. In taking actions, the fish can
+weight information from neighbors based on their distance. The fish aims to
+stay between a lower and upper limit of neighbors to maintain a cohesive
+collective. It can move at a maximal speed and updates its behavior on
+every clock tick.</p>
+<dl class="method">
+<dt id="fish.Fish.communicate">
+<code class="descname">communicate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.communicate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.communicate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Broadcast all collected event messages.</p>
+<p>This method is called as part of the second clock cycle.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.comp_center">
+<code class="descname">comp_center</code><span class="sig-paren">(</span><em>rel_pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.comp_center"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.comp_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the (potentially weighted) centroid of the fish neighbors</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first last docutils">
+<dt>rel_pos {dict} – Dictionary of relative positions to the</dt>
+<dd>neighboring fish.</dd>
+</dl>
+</dd>
+<dt>Returns:</dt>
+<dd>np.array – 3D centroid</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.eval">
+<code class="descname">eval</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.eval"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.eval" title="Permalink to this definition">¶</a></dt>
+<dd><p>The fish evaluates its state</p>
+<p>Currently the fish checks all responses to previous pings and evaluates
+its relative position to all neighbors. Neighbors are other fish that
+received the ping element.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.homing_handler">
+<code class="descname">homing_handler</code><span class="sig-paren">(</span><em>event</em>, <em>pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.homing_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.homing_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Homing handler, i.e., make fish aggregated extremely</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {Homing} – Homing event
+pos {np.array} – Position of the homing event initialtor</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.hop_count_handler">
+<code class="descname">hop_count_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.hop_count_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.hop_count_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hop count handler</p>
+<p>Initialize only of the last hop count event is 4 clocks old. Otherwise
+update the hop count and resend the new value only if its larger than
+the previous hop count value.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {HopCount} – Hop count event instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.info_ext_handler">
+<code class="descname">info_ext_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.info_ext_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.info_ext_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>External information handler</p>
+<p>Always accept the external information and spread the news.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {InfoExternal} – InfoExternal event</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.info_int_handler">
+<code class="descname">info_int_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.info_int_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.info_int_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal information event handler.</p>
+<p>Only accept the information of the clock is higher than from the last
+information</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {InfoInternal} – Internal information event instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.leader_election_handler">
+<code class="descname">leader_election_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.leader_election_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.leader_election_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Leader election handler</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {LeaderElection} – Leader election event instance</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.log">
+<code class="descname">log</code><span class="sig-paren">(</span><em>neighbors={}</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.log"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Log current state</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.move">
+<code class="descname">move</code><span class="sig-paren">(</span><em>neighbors</em>, <em>rel_pos</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.move"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.move" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a cohesion and target-driven move</p>
+<p>The move is determined by the relative position of the centroid and a
+target position and is limited by the maximum fish speed.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first docutils">
+<dt>neighbors {set} – Set of active neighbors, i.e., other fish that</dt>
+<dd>responded to the most recent ping event.</dd>
+</dl>
+<p class="last">rel_pos {dict} – Relative positions to all neighbors</p>
+</dd>
+<dt>Returns:</dt>
+<dd>np.array – Move direction as a 3D vector</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.move_handler">
+<code class="descname">move_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.move_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.move_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle move events, i.e., update the target position.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {Move} – Event holding an x, y, and z target position</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.ping_handler">
+<code class="descname">ping_handler</code><span class="sig-paren">(</span><em>neighbors</em>, <em>rel_pos</em>, <em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.ping_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.ping_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle ping events</p>
+<p>Adds the</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd><dl class="first docutils">
+<dt>neighbors {set} – Set of active neighbors, i.e., nodes from which</dt>
+<dd>this fish received a ping event.</dd>
+<dt>rel_pos {dict} – Dictionary of relative positions from this fish</dt>
+<dd>to the source of the ping event.</dd>
+</dl>
+<p class="last">event {Ping} – The ping event instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the process recursively</p>
+<p>This method simulates the fish and calls <cite>eval</cite> on every clock tick as
+long as the fish <cite>is_started</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.start">
+<code class="descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start the process</p>
+<p>This sets <cite>is_started</cite> to true and invokes <cite>run()</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.start_hop_count_handler">
+<code class="descname">start_hop_count_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.start_hop_count_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.start_hop_count_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hop count start handler</p>
+<p>Always accept a new start event for a hop count</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {StartHopCount} – Hop count start event</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.start_leader_election_handler">
+<code class="descname">start_leader_election_handler</code><span class="sig-paren">(</span><em>event</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.start_leader_election_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.start_leader_election_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Leader election start handler</p>
+<p>Always accept a new start event for a leader election</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>event {StartLeaderElection} – Leader election start event</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.stop">
+<code class="descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stop the process</p>
+<p>This sets <cite>is_started</cite> to false.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.update_behavior">
+<code class="descname">update_behavior</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.update_behavior"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.update_behavior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the fish behavior.</p>
+<p>This actively changes the cohesion strategy to either ‘wait’, i.e, do
+not care about any neighbors or ‘signal_aircraft’, i.e., aggregate with
+as many fish friends as possible.</p>
+<p>In robotics ‘signal_aircraft’ is a secret key word for robo-fish-nerds
+to gather in a secret lab until some robo fish finds a robo aircraft.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="fish.Fish.weight_neighbor">
+<code class="descname">weight_neighbor</code><span class="sig-paren">(</span><em>rel_pos_to_neighbor</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/fish.html#Fish.weight_neighbor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#fish.Fish.weight_neighbor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Weight neighbors by the relative position to them</p>
+<p>Currently only returns a static value but this could be tweaked in the
+future to calculate a weighted center point.</p>
+<dl class="docutils">
+<dt>Arguments:</dt>
+<dd>rel_pos_to_neighbor {np.array} – Relative position to a neighbor</dd>
+<dt>Returns:</dt>
+<dd>float – Weight for this neighbor</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">BlueSim</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Florian Berlinger.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,6 +1,7 @@
 import numpy as np
 from queue import Queue, PriorityQueue
 import time
+import math
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 
@@ -76,6 +77,11 @@ class Observer():
         self.x = []
         self.y = []
         self.z = []
+        self.vx = []
+        self.vy = []
+        self.vz = []
+        self.v_mean = []
+        self.d_mean = []
         self.c = []
         self.status = []
         self.reset = False
@@ -87,6 +93,9 @@ class Observer():
             self.x.append([])
             self.y.append([])
             self.z.append([])
+            self.vx.append([])
+            self.vy.append([])
+            self.vz.append([])
             self.status.append([])
 
         self.is_started = False
@@ -353,10 +362,32 @@ class Observer():
         self.check_transmissions()
         self.check_instructions()
 
+        # mean swarm speed for evaluation of aggregation/dispersion
+        d_mean = 0
+        #v_mean = 0
+
         for i in range(self.num_nodes):
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
             self.z[i].append(self.environment.node_pos[i, 2])
+
+            # ipyvolume quiver does not plot elements with zero velocity
+            #if self.environment.node_vel[i, 0] == 0: #xx
+            #    self.vx[i].append(math.cos(self.environment.node_phi[i]))
+            #else:
+            self.vx[i].append(self.environment.node_vel[i, 0])
+
+            #if self.environment.node_vel[i, 1] == 0: #xx
+            #    self.vy[i].append(math.sin(self.environment.node_phi[i]))
+            #else:
+            self.vy[i].append(self.environment.node_vel[i, 1])
+
+            # fish should be neutral pitch in animations > vz = 0
+            #self.vz[i].append(self.environment.node_vel[i, 2])
+            self.vz[i].append(0)
+
+            d_mean += self.fish[i].d_center
+            #v_mean += math.sqrt(self.vx[i]**2 + self.vy[i]**2 + self.vz[i]**2)
 
             n = len(self.fish[i].neighbors)
 
@@ -366,6 +397,9 @@ class Observer():
                 self.status[i].append(1)
             else:
                 self.status[i].append(0)
+
+        self.d_mean.append(d_mean/self.num_nodes)
+        #self.v_mean.append(v_mean/self.num_nodes)
 
         self.clock += 1
 
@@ -380,9 +414,9 @@ class Observer():
         """Plot the fish movement
         """
         ax = plt.gca(projection='3d')
-        ax.set_xlim3d(0, 178)
-        ax.set_ylim3d(0, 178)
-        ax.set_zlim3d(0, 117)
+        ax.set_xlim3d(0, 1780)
+        ax.set_ylim3d(0, 1780)
+        ax.set_zlim3d(0, 1170)
         ax.set_xlabel('X axis')
         ax.set_ylabel('Y axis')
         ax.set_zlabel('Z axis')

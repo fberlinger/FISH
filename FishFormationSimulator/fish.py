@@ -9,8 +9,8 @@ from eventcodes import (
     PING, HOMING, HOP_COUNT, INFO_EXTERNAL, INFO_INTERNAL, START_HOP_COUNT,
     START_LEADER_ELECTION, LEADER_ELECTION, MOVE
 )
-
-
+from math import sqrt
+from math import ceil
 class Fish():
     """This class models each fish robot node in the network from the fish'
     perspective.
@@ -22,12 +22,22 @@ class Fish():
     collective. It can moves at a maximal speed and updates its behavior on
     every clock tick.
     """
-
+    """ Added by Magaly: 
+    direction: [0,1,2,3]
+    N,E,S,W
+    formation : Different formation options 
+    0: Triangle Base of 3 
+    1: Rectangular base 
+    """
     def __init__(
         self,
         id,
         channel,
+        orientation,
+        formation_num, 
+        tolerance, 
         interaction,
+        fish_total_error,
         lim_neighbors=[0, math.inf],
         fish_max_speed=1,
         clock_freq=1,
@@ -60,7 +70,11 @@ class Fish():
 
         self.id = id
         self.channel = channel
+        self.orientation = orientation
+        self.formation_num = formation_num
+        self.tolerance = tolerance
         self.interaction = interaction
+        self.fish_total_error = fish_total_error
         self.neighbor_weight = neighbor_weight
         self.lim_neighbors = lim_neighbors
         self.fish_max_speed = fish_max_speed
@@ -396,6 +410,165 @@ class Fish():
 
         return center
 
+    # Start of Magaly's code 
+    #Lists of target formations 
+    '''
+    0) Trigonal planar: Three neighbors f_i is the center of the neighbors each neighbor is 120 degrees from each other.
+    1) Triangle: Two neighbors. 60 degrees between my two neighbors. 
+    2) Pentagon: Five neighbors. 72 degrees from eahc other. 
+    3) Square planar: 
+    4) T-shape: 
+
+    '''
+    
+    #This function needs to be updated if wanting to include other physical obstacles
+    #A fish is ocluded if it is between the lines from the current fish and the front of a neighbor fish 
+    #and the current fish to the tail of the neighbor fish. 
+    def not_ocluded(self, rel_pos, r, fish_size):
+        rel_pos = rel_pos.sort_values(['dist'])
+        not_visible_fish = []
+        for index, neighbor in rel_pos.iterrows(): 
+            if(index not in not_visible_fish):
+                if(neighbor.dist> r):
+                    rel_pos = rel_pos.drop(index, axis=0)
+                    not_visible_fish.append(index)
+                else:
+                    m1 = (neighbor.Y+fish_size)/(neighbor.X)
+                    m2 = (neighbor.Y-fish_size)/(neighbor.X)
+                    for index2, neighbor2 in rel_pos.iterrows():
+                        if(neighbor2.Y<(neighbor2.Y*m1)and neighbor2.Y>(neighbor2.Y*m2) and neighbor2.X>neighbor.X):
+                            rel_pos = rel_pos.drop(index2, axis=0)
+                            not_visible_fish.append(index2)
+                            
+        return rel_pos, not_visible_fish
+    
+    def visible_neighbors (self, rel_pos):
+        """Returns a dataframe of neighbors that are visible to the fish depending on target formation.
+        Arguments:
+            rel_pos {dict} -- relative position of all neighbors 
+            orientation {} -- Orientation of the fish to detect visisble neighbors 
+        Returns:
+            pandas.dataframe -- a dataframe of the neighbors of the fish that are needed for a certain formation
+        """
+        # This part of the code  uses the orientation of the fish to detect which neighbors are seen in front. 
+        orientation = self.orientation
+        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
+        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
+        df['front'] =0
+        #orientation= [orientation[1], -orientation[0]] 
+        #for i,row in df.iterrows():
+            #front_n= ((row.X - orientation[0])*(orientation[0]) - (row.Y)*(orientation[1]))
+            #front_n= np.cross([row.X-orientation[0],row.Y-orientation[1]], np.negative(orientation))
+            #df.at[i, 'front'] = front_n
+        neighbors_front =  df[df['X']>=0]
+        neighbors_front = neighbors_front.sort_values(['dist','X'], ascending =True )
+        if (self.formation_num == 0):
+            if(len(neighbors_front)>=3):
+                return neighbors_front.iloc[:3]
+            else: 
+                return neighbors_front
+        elif (self.formation_num == 1):
+            if(len(neighbors_front)>=2):
+                return neighbors_front.iloc[:2]
+            else: 
+                return neighbors_front
+        elif (self.formation_num == 2):
+            if(len(neighbors_front)>=3):
+                return neighbors_front.iloc[:3]
+            else: 
+                return neighbors_front 
+        return rel_pos_vis_neighbors
+  
+
+    #This function returns the fitness level of the fish f_i given the target formation
+    def fitnes(self, my_neighbors,linespace):
+        total_square_error = 0 
+        if (self.formation_num == 0):
+            return 0.0
+        elif (self.formation_num == 1):
+            #Triangle formation
+            #x_target = linespace*np.sin(np.deg2rad(60))
+            #y_target = linespace*np.cos(np.deg2rad(60))
+            if(len(my_neighbors)>1):
+                for index in range(len(my_neighbors)): 
+                    total_square_error += linespace - my_neighbors.iloc[index]['dist']
+        elif(self.formation_num == 2): 
+            return 0.0
+        return total_square_error
+
+    def triangle_local(self,rel_pos,linespace,orientation):
+        """Connect in a triangle formation with my nearest neighbors.
+        Arguments:
+            rel_pos {dict} -- dictionary to all of the neighbors in the formation
+            linespace {float}  -- Ideal space between floats. 
+            orientation {} -- Orientation of the fish to detect visisble neighbors 
+        Returns:
+            np.array -- Move direction as a 2D vector
+        """
+        #Target values 
+        #Given the linespace (hypothemuse)  calculate the ideal x and y distances  
+        local_tolerance = .0004
+        x_target = linespace*np.sin(np.deg2rad(60))
+        y_target = linespace*np.cos(np.deg2rad(60))
+        my_neighbors = self.visible_neighbors(rel_pos)
+        move = [0,0]
+        #First we are going to check we indeed have access to the required number of neighbors
+        self.fish_total_error = abs(self.fitnes(my_neighbors, linespace))
+        if(len(my_neighbors)==0):
+            #If there is no visible neighbors then I remain in my position 
+            return [0,0]
+        elif(len(my_neighbors)==1):
+            #If there is only one visible neighbor I will align to it attempting to keep the overall angles 
+            #The target distance from the closest neighbor is equivalent to the linespace
+            if(abs(self.fitnes(my_neighbors, linespace))<= self.tolerance):
+                return [0,0]
+            else: 
+                return [my_neighbors.iloc[0]['X']-x_target,my_neighbors.iloc[0]['Y']-y_target]
+        else:
+            #There are two neighbors so my final move will be a combination of the spaces between neighbors
+            #print(abs(self.fitnes(my_neighbors, linespace)))
+            if(abs(self.fitnes(my_neighbors, linespace))<= self.tolerance):
+                return [0,0]
+            else: 
+                n1 = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                n2 = [my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']]
+                dist_between_neighbors =  np.sqrt( (n1[0]-n2[0])**2 + (n1[0]-n2[0])**2)
+                if(linespace - local_tolerance <= dist_between_neighbors <= linespace + local_tolerance): 
+                    #My neighbors are spaced correctly, now I have to form the triangle between them 
+                    #Here I can check which neighbor has the higher x but I do not like that 
+                    m = [(n1[0]+n2[0])/2,(n1[1]+n2[1])/2]
+                    slope = -1/((n2[1]-n1[1])/(n2[0]-n1[0]))
+                    b = m[1]- slope*m[0]
+                    p = [m[0]-2,(m[0]-2)*slope+b]
+                    v= np.subtract(m,p)
+                    move1 =np.add(m,v/np.linalg.norm(v)*linespace)
+                    move2 = np.subtract(m,v/np.linalg.norm(v)*linespace)
+                    d1 = np.sqrt( (move1[0])**2 + (move1[1])**2)
+                    d2 = np.sqrt( (move2[0])**2 + (move2[1])**2)
+                    if(d1>=d2):
+                        move = move2
+                    else: 
+                        move = move1
+                    #[mid_point[0]-(mid_point[0]-n1[0])*np.sqrt(3), mid_point[1]+(mid_point[1]-n1[1])*np.sqrt(3)] #np.add(mid_point,np.dot([n[1],-n[0]],linespace))
+                    #print(n1,n2,move)
+
+                else: 
+                    #Select one of your closest neighbors, the one with the higher x  align to it 
+                    if (n1[0]>n2[0]):
+                       move = [(my_neighbors.iloc[0]['X']-x_target),my_neighbors.iloc[0]['Y']-y_target]
+                    else: 
+                       move = [(my_neighbors.iloc[1]['X']-x_target),my_neighbors.iloc[1]['Y']-y_target]
+                    # m = [(n1[0]+n2[0])/2,(n1[1]+n2[1])/2]
+                    # slope = -1/((n2[1]-n1[1])/(n2[0]-n1[0]))
+                    # b = m[1]- slope*m[0]
+                    # p = [m[0]-2,(m[0]-2)*slope+b]
+                    # v= np.subtract(m,p)
+                    # move =np.add(m,v/np.linalg.norm(v)*linespace)
+        return move
+
+
+
+
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
 
@@ -410,86 +583,61 @@ class Fish():
         Returns:
             np.array -- Move direction as a 2D vector
         """
-        n = len(neighbors)
-        # Get the centroid of the swarm
-        centroid_pos = np.zeros((2,))
+        # n = len(neighbors)
+        # # Get the centroid of the swarm
+        # centroid_pos = np.zeros((2,))
 
-        if n < self.lim_neighbors[0]:
-            # Get the relative direction to the centroid of the swarm
-            centroid_pos = self.comp_center(rel_pos)
-        elif n > self.lim_neighbors[1]:
-            # Get the inverse relative direction to centroid of the swarm
-            centroid_pos = -self.comp_center(rel_pos)
-            # Adjust length
-            magnitude = np.linalg.norm(centroid_pos)
-            centroid_pos /= magnitude**2
-
-        move = self.target_pos + centroid_pos
-
+        # if n < self.lim_neighbors[0]:
+        #     # Get the relative direction to the centroid of the swarm
+        #     centroid_pos = self.comp_center(rel_pos)
+        # elif n > self.lim_neighbors[1]:
+        #     # Get the inverse relative direction to centroid of the swarm
+        #     centroid_pos = -self.comp_center(rel_pos)
+        #     # Adjust length
+        #     magnitude = np.linalg.norm(centroid_pos)
+        #     centroid_pos /= magnitude**2
+        # print('target :',self.target_pos)
+        # move = self.target_pos + centroid_pos
+        
         # Cap the length of the move
+        r =20
+        fish_size =0.001
+        linespace = 2
+        if (self.formation_num == 0):
+            move = [0,0]#self.fibonacci_xline(rel_pos,linespace, r, fish_size)
+        elif (self.formation_num == 1):
+            move = self.triangle_local(rel_pos,linespace,self.orientation)
+        elif (self.formation_num == 2):
+            move = [0,0] #self.mapped_formation_move(rel_pos,len(neighbors),1,linespace)
+        elif (self.formation_num == 3):
+            move = [0,0] #self.triangle_local(rel_pos,linespace,self.orientation, 2)
+        
+       
+        #self.orientation = np.linalg.norm(move)
+        self.target_pos = np.nan_to_num(self.target_pos)
+        move = np.nan_to_num(move)
         magnitude = np.linalg.norm(move)
         if magnitude == 0:
             magnitude = 1
-        
-        
-        magnitude = np.sqrt(move[0]**2 + move[1]**2)
-        #direction = move / magnitude
-        #final_move = direction * min(magnitude, self.fish_max_speed)
+        direction = move*(1/magnitude) 
+        final_move = direction * min(magnitude, self.fish_max_speed)
+
         if self.verbose:
             print('Fish #{}: move to {}'.format(self.id, final_move))
-        final_move =self.move_formation(neighbors,rel_pos)
+
+        #move = self.define_target(rel_pos,target_map)
+        #move = np.nan_to_num(move)
+        #magnitude = np.sqrt(move[0]**2 + move[1]**2)
+        #final_move = move* min(magnitude, self.fish_max_speed)
+
+        #direction = move / magnitude
+        #final_move = direction * min(magnitude, self.fish_max_speed)
+        #if self.verbose:
+         #   print('Fish #{}: move to {}'.format(self.id, final_move))
+        #final_move = self.move_formation(neighbors,rel_pos)
         return final_move
 
-    def move_formation(self,neighbors,rel_pos):
-        df = pd.DataFrame.from_dict(rel_pos, orient = 'index', columns=['X', 'Y'])
-        r = np.sqrt(2)
-        d = .6
-        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
-        i = df[(df['Y'] > 0 )& (df['X'] > 0)]
-        ii = df[(df['Y'] > 0 )& (df['X'] < 0)]
-        iii= df[(df['Y'] < 0) & (df['X'] < 0)]
-        iv = df[(df['Y'] < 0) & (df['X'] > 0)]
-
-        xr=xl=yl=yr =0.0
-        step_size = 0.5
-        quadrants = [i,ii,iii,iv]
-        x = []
-        y = []
-        for q in quadrants: 
-            q.sort_values(['dist'])
-            if(len(q)>0):
-                x.append(q['X'].values[0]-d)
-                y.append(q['Y'].values[0]-d)
-        #neig_clique.append([q['X'].values[0]-d,q['Y'].values[0]-d])
-            else:
-                x.append(0)
-                y.append(0)
-        #neig_clique.append([0,0])  
-        dx=dy=0
-        if(x[0]==0):
-            dx = x[1]
-        elif(x[1]==0):
-            dx = x[0]
-        else: 
-            dx= (x[0]+ x[1])/2
-        if(y[0]==0):
-            dy = y[1]
-        elif(y[1]==0):
-            dy = y[0]
-        else:
-            dy= (y[0] + y[1])/2
-        
-        if(dy>d):
-            dy = d
-        elif(dy!=0):
-            dy=-d
-        if(dx>d):
-            dx = d
-        elif(dx!=0):
-            dx=-d
-        final_move = [dx,dy]
-        return final_move
-
+   
 
     def update_behavior(self):
         """Update the fish behavior.

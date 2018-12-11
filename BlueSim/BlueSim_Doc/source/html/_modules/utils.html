@@ -1,0 +1,346 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>utils &#8212; BlueSim 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">BlueSim 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Helper methods to run the experiment</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="k">import</span> <span class="n">Axes3D</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="kn">from</span> <span class="nn">channel</span> <span class="k">import</span> <span class="n">Channel</span>
+<span class="kn">from</span> <span class="nn">environment</span> <span class="k">import</span> <span class="n">Environment</span>
+<span class="kn">from</span> <span class="nn">interaction</span> <span class="k">import</span> <span class="n">Interaction</span>
+<span class="kn">from</span> <span class="nn">fish</span> <span class="k">import</span> <span class="n">Fish</span>
+<span class="kn">from</span> <span class="nn">observer</span> <span class="k">import</span> <span class="n">Observer</span>
+
+
+<div class="viewcode-block" id="generate_distortion"><a class="viewcode-back" href="../index.html#utils.generate_distortion">[docs]</a><span class="k">def</span> <span class="nf">generate_distortion</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="n">magnitude</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates a distortion model represented as a vector field</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">n</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">n</span><span class="p">]</span>
+    <span class="n">distortion</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span><span class="p">:</span>
+        <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">distortion</span>
+
+    <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;linear&#39;</span><span class="p">:</span>
+        <span class="n">X_new</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">Y_new</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">Z_new</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;aggregation&#39;</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">Y</span><span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">X</span><span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">X_new</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">Y_new</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">Z_new</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;dispersion&#39;</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">Y</span><span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">X</span><span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">X_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">Y_new</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="n">Z_new</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="s1">&#39;curl&#39;</span><span class="p">:</span>
+        <span class="n">X_new</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">Y</span><span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">Y_new</span> <span class="o">=</span> <span class="n">X</span><span class="o">-</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">Z_new</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">norm_magnitude</span> <span class="o">=</span> <span class="n">magnitude</span><span class="o">/</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">X_new</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Y_new</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Z_new</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">norm_magnitude</span> <span class="o">*</span> <span class="n">X_new</span>
+    <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">norm_magnitude</span> <span class="o">*</span> <span class="n">Y_new</span>
+    <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">norm_magnitude</span> <span class="o">*</span> <span class="n">Z_new</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">quiver</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">distortion</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">distortion</span></div>
+
+
+<div class="viewcode-block" id="generate_fish"><a class="viewcode-back" href="../index.html#utils.generate_fish">[docs]</a><span class="k">def</span> <span class="nf">generate_fish</span><span class="p">(</span>
+    <span class="n">n</span><span class="p">,</span>
+    <span class="n">channel</span><span class="p">,</span>
+    <span class="n">interaction</span><span class="p">,</span>
+    <span class="n">lim_neighbors</span><span class="p">,</span>
+    <span class="n">neighbor_weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">fish_max_speeds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">clock_freqs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">names</span><span class="o">=</span><span class="kc">None</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate some fish</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        n {int} -- Number of fish to generate</span>
+<span class="sd">        channel {Channel} -- Channel instance</span>
+<span class="sd">        interaction {Interaction} -- Interaction instance</span>
+<span class="sd">        lim_neighbors {list} -- Tuple of min and max neighbors</span>
+<span class="sd">        neighbor_weight {float|list} -- List of neighbor weights</span>
+<span class="sd">        fish_max_speeds {float|list} -- List of max speeds</span>
+<span class="sd">        clock_freqs {int|list} -- List of clock speeds</span>
+<span class="sd">        names {list} -- List of names for your fish</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">neighbor_weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">neighbor_weights</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">neighbor_weights</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">neighbor_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">neighbor_weights</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+
+    <span class="k">if</span> <span class="n">fish_max_speeds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fish_max_speeds</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fish_max_speeds</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">fish_max_speeds</span> <span class="o">=</span> <span class="p">[</span><span class="n">fish_max_speeds</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+
+    <span class="k">if</span> <span class="n">clock_freqs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">clock_freqs</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">clock_freqs</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">clock_freqs</span> <span class="o">=</span> <span class="p">[</span><span class="n">clock_freqs</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+
+    <span class="k">if</span> <span class="n">names</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Unnamed&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">n</span>
+
+    <span class="n">fish</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="n">fish</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Fish</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+            <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
+            <span class="n">interaction</span><span class="o">=</span><span class="n">interaction</span><span class="p">,</span>
+            <span class="n">lim_neighbors</span><span class="o">=</span><span class="n">lim_neighbors</span><span class="p">,</span>
+            <span class="n">neighbor_weight</span><span class="o">=</span><span class="n">neighbor_weights</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">fish_max_speed</span><span class="o">=</span><span class="n">fish_max_speeds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">clock_freq</span><span class="o">=</span><span class="n">clock_freqs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">fish</span></div>
+
+
+<div class="viewcode-block" id="init_simulation"><a class="viewcode-back" href="../index.html#utils.init_simulation">[docs]</a><span class="k">def</span> <span class="nf">init_simulation</span><span class="p">(</span>
+    <span class="n">clock_freq</span><span class="p">,</span>
+    <span class="n">single_time</span><span class="p">,</span>
+    <span class="n">offset_time</span><span class="p">,</span>
+    <span class="n">num_trials</span><span class="p">,</span>
+    <span class="n">final_buffer</span><span class="p">,</span>
+    <span class="n">run_time</span><span class="p">,</span>
+    <span class="n">num_fish</span><span class="p">,</span>
+    <span class="n">size_dist</span><span class="p">,</span>
+    <span class="n">center</span><span class="p">,</span>
+    <span class="n">spread</span><span class="p">,</span>
+    <span class="n">fish_pos</span><span class="p">,</span>
+    <span class="n">lim_neighbors</span><span class="p">,</span>
+    <span class="n">neighbor_weights</span><span class="p">,</span>
+    <span class="n">fish_max_speeds</span><span class="p">,</span>
+    <span class="n">noise_magnitude</span><span class="p">,</span>
+    <span class="n">conn_thres</span><span class="p">,</span>
+    <span class="n">prob_type</span><span class="p">,</span>
+    <span class="n">dist_type</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="p">,</span>
+    <span class="n">conn_drop</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize all the instances needed for a simulation</span>
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        clock_freq {int} -- Clock frequency for each fish.</span>
+<span class="sd">        single_time {float} -- Number clock cycles per individual run.</span>
+<span class="sd">        offset_time {float} -- Initial clock offset time</span>
+<span class="sd">        num_trials {int} -- Number of trials per experiment.</span>
+<span class="sd">        final_buffer {float} -- Final clock buffer (because the clocks don&#39;t</span>
+<span class="sd">            sync perfectly).</span>
+<span class="sd">        run_time {float} -- Total run time in seconds.</span>
+<span class="sd">        num_fish {int} -- Number of fish.</span>
+<span class="sd">        size_dist {int} -- Distortion field size.</span>
+<span class="sd">        center {float} -- Distortion field center.</span>
+<span class="sd">        spread {float} -- Initial fish position spread.</span>
+<span class="sd">        fish_pos {np.array} -- Initial fish position.</span>
+<span class="sd">        lim_neighbors {list} -- Min. and max. desired neighbors. If too few</span>
+<span class="sd">            neighbors start aggregation, if too many neighbors disperse!</span>
+<span class="sd">        neighbor_weights {float} -- Distance-depending neighbor weight.</span>
+<span class="sd">        fish_max_speeds {float} -- Max fish speed.</span>
+<span class="sd">        noise_magnitude {float} -- Amount of white noise added to each move.</span>
+<span class="sd">        conn_thres {float} -- Distance at which the connection either cuts off</span>
+<span class="sd">            or starts dropping severely.</span>
+<span class="sd">        prob_type {str} -- Probability type. Can be `binary`, `quadratic`, or</span>
+<span class="sd">            `sigmoid`.</span>
+<span class="sd">        dist_type {str} -- Position distortion type</span>
+<span class="sd">        verbose {bool} -- If `true` print a lot of stuff</span>
+
+<span class="sd">    Keyword Arguments:</span>
+<span class="sd">        conn_drop {number} -- Defined the connection drop for the sigmoid</span>
+<span class="sd">            (default: {1.0})</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple -- Quintuple holding the `channel`, `environment`, `fish,</span>
+<span class="sd">            `interaction`, and `observer`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">distortion</span> <span class="o">=</span> <span class="n">generate_distortion</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">dist_type</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">size_dist</span><span class="p">)</span>
+    <span class="n">environment</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+        <span class="n">node_pos</span><span class="o">=</span><span class="n">fish_pos</span><span class="p">,</span>
+        <span class="n">distortion</span><span class="o">=</span><span class="n">distortion</span><span class="p">,</span>
+        <span class="n">prob_type</span><span class="o">=</span><span class="n">prob_type</span><span class="p">,</span>
+        <span class="n">noise_magnitude</span><span class="o">=</span><span class="n">noise_magnitude</span><span class="p">,</span>
+        <span class="n">conn_thres</span><span class="o">=</span><span class="n">conn_thres</span><span class="p">,</span>
+        <span class="n">conn_drop</span><span class="o">=</span><span class="n">conn_drop</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
+    <span class="p">)</span>
+    <span class="n">interaction</span> <span class="o">=</span> <span class="n">Interaction</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+    <span class="n">channel</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+
+    <span class="n">fish</span> <span class="o">=</span> <span class="n">generate_fish</span><span class="p">(</span>
+        <span class="n">n</span><span class="o">=</span><span class="n">num_fish</span><span class="p">,</span>
+        <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
+        <span class="n">interaction</span><span class="o">=</span><span class="n">interaction</span><span class="p">,</span>
+        <span class="n">lim_neighbors</span><span class="o">=</span><span class="n">lim_neighbors</span><span class="p">,</span>
+        <span class="n">neighbor_weights</span><span class="o">=</span><span class="n">neighbor_weights</span><span class="p">,</span>
+        <span class="n">fish_max_speeds</span><span class="o">=</span><span class="n">fish_max_speeds</span><span class="p">,</span>
+        <span class="n">clock_freqs</span><span class="o">=</span><span class="n">clock_freq</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span>
+    <span class="p">)</span>
+    <span class="n">channel</span><span class="o">.</span><span class="n">set_nodes</span><span class="p">(</span><span class="n">fish</span><span class="p">)</span>
+
+    <span class="n">observer</span> <span class="o">=</span> <span class="n">Observer</span><span class="p">(</span>
+        <span class="n">fish</span><span class="o">=</span><span class="n">fish</span><span class="p">,</span>
+        <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
+        <span class="n">channel</span><span class="o">=</span><span class="n">channel</span><span class="p">,</span>
+        <span class="n">clock_freq</span><span class="o">=</span><span class="n">clock_freq</span><span class="p">,</span>
+        <span class="n">fish_pos</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">fish_pos</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">channel</span><span class="o">.</span><span class="n">intercept</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">channel</span><span class="p">,</span> <span class="n">environment</span><span class="p">,</span> <span class="n">fish</span><span class="p">,</span> <span class="n">interaction</span><span class="p">,</span> <span class="n">observer</span></div>
+
+
+<div class="viewcode-block" id="run_simulation"><a class="viewcode-back" href="../index.html#utils.run_simulation">[docs]</a><span class="k">def</span> <span class="nf">run_simulation</span><span class="p">(</span>
+    <span class="n">fish</span><span class="p">,</span>
+    <span class="n">observer</span><span class="p">,</span>
+    <span class="n">run_time</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">dark</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">white_axis</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">no_legend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">no_star</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Start the simulation.</span>
+
+
+<span class="sd">    Arguments:</span>
+<span class="sd">        fish {list} -- List of fish instances</span>
+<span class="sd">        observer {Observer} -- Observer instance</span>
+
+<span class="sd">    Keyword Arguments:</span>
+<span class="sd">        run_time {number} -- Total run time in seconds (default: {10})</span>
+<span class="sd">        dark {bool} -- If `True` plot a dark chart (default: {False})</span>
+<span class="sd">        white_axis {bool} -- If `True` plot white axes (default: {False})</span>
+<span class="sd">        no_legend {bool} -- If `True` do not plot a legend (default: {False})</span>
+<span class="sd">        no_star {bool} -- If `True` do not plot a star (default: {False})</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">stop</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fish</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;It</span><span class="se">\&#39;</span><span class="s1">s time to say bye bye!&#39;</span><span class="p">)</span>
+
+        <span class="n">observer</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">dark</span><span class="o">=</span><span class="n">dark</span><span class="p">,</span>
+            <span class="n">white_axis</span><span class="o">=</span><span class="n">white_axis</span><span class="p">,</span>
+            <span class="n">no_legend</span><span class="o">=</span><span class="n">no_legend</span><span class="p">,</span>
+            <span class="n">no_star</span><span class="o">=</span><span class="n">no_star</span>
+        <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Please wait patiently </span><span class="si">{}</span><span class="s1"> seconds. Thanks.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">run_time</span><span class="p">))</span>
+
+    <span class="c1"># Start the fish</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fish</span><span class="p">:</span>
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">observer</span><span class="o">.</span><span class="n">start</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="c1"># Ciao stops run time</span>
+    <span class="n">threading</span><span class="o">.</span><span class="n">Timer</span><span class="p">(</span><span class="n">run_time</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">BlueSim 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Florian Berlinger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>

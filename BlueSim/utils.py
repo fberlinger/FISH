@@ -9,54 +9,67 @@ import threading
 from channel import Channel
 from environment import Environment
 from interaction import Interaction
-from fish import Fish
+from blindspot import Fish
 from observer import Observer
 
 
-def generate_distortion(type='linear', magnitude=1, n=10, show=False):
+def generate_distortion(type='none', magnitude=1, n=10, show=False):
     """Generates a distortion model represented as a vector field
+
+    Commented lines are for 3D distortion with z-component
     """
 
-    X, Y, Z = np.mgrid[0:n, 0:n, 0:n]
-    distortion = np.zeros((n, n, n, 3))
+    X, Y = np.mgrid[0:n, 0:n]
+    distortion = np.zeros((n, n, 3))
+    #X, Y, Z = np.mgrid[0:n, 0:n, 0:n]
+    #distortion = np.zeros((n, n, n, 3))
 
     if type == 'none':
-        distortion[:, :, :, 0] = 0
-        distortion[:, :, :, 1] = 0
-        distortion[:, :, :, 2] = 0
+        distortion[:, :, 0] = 0
+        distortion[:, :, 1] = 0
+        #distortion[:, :, :, 2] = 0
         return distortion
 
     elif type == 'linear':
         X_new = 1
         Y_new = 0
-        Z_new = 0
+        new_dist = np.sqrt(X_new**2 + Y_new**2)
+        #Z_new = 0
 
     elif type == 'aggregation':
         theta = np.arctan2(Y-(n-1)/2, X-(n-1)/2)
         X_new = -np.cos(theta)
         Y_new = -np.sin(theta)
-        Z_new = 0
+        new_dist = np.sqrt(X_new**2 + Y_new**2)
+        new_dist[new_dist == 0] = 0.1
+        #Z_new = 0
 
     elif type == 'dispersion':
         theta = np.arctan2(Y-(n-1)/2, X-(n-1)/2)
         X_new = np.cos(theta)
         Y_new = np.sin(theta)
-        Z_new = 0
+        new_dist = np.sqrt(X_new**2 + Y_new**2)
+        new_dist[new_dist == 0] = 0.1
+        #Z_new = 0
 
     elif type == 'curl':
         X_new = -(Y-(n-1)/2)
         Y_new = X-(n-1)/2
-        Z_new = 0
+        new_dist = np.sqrt(X_new**2 + Y_new**2)
+        new_dist[new_dist == 0] = 0.1
+        #Z_new = 0
 
-    norm_magnitude = magnitude/(np.sqrt(X_new**2 + Y_new**2 + Z_new**2))
-    distortion[:, :, :, 0] = norm_magnitude * X_new
-    distortion[:, :, :, 1] = norm_magnitude * Y_new
-    distortion[:, :, :, 2] = norm_magnitude * Z_new
+
+    norm_magnitude = magnitude/new_dist# + Z_new**2))
+    distortion[:, :, 0] = norm_magnitude * X_new
+    distortion[:, :, 1] = norm_magnitude * Y_new
+    #distortion[:, :, :, 2] = norm_magnitude * Z_new
 
     if show:
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        ax.quiver(X, Y, Z, distortion[:, :, :, 0], distortion[:, :, :, 1], distortion[:, :, :, 2])
+        plt.quiver(X, Y, distortion[:, :, 0], distortion[:, :, 1])
+        #fig = plt.figure()
+        #ax = fig.gca(projection='3d')
+        #ax.quiver(X, Y, Z, distortion[:, :, :, 0], distortion[:, :, :, 1], distortion[:, :, :, 2])
         plt.show()
 
     return distortion
@@ -66,6 +79,9 @@ def generate_fish(
     n,
     channel,
     interaction,
+    dynamics,
+    w_blindspot,
+    target_dist,
     lim_neighbors,
     neighbor_weights=None,
     fish_max_speeds=None,
@@ -110,6 +126,9 @@ def generate_fish(
             id=i,
             channel=channel,
             interaction=interaction,
+            dynamics=dynamics,
+            w_blindspot=w_blindspot,
+            target_dist=target_dist,
             lim_neighbors=lim_neighbors,
             neighbor_weight=neighbor_weights[i],
             fish_max_speed=fish_max_speeds[i],
@@ -245,12 +264,13 @@ def run_simulation(
         print('It\'s time to say bye bye!')
 
         observer.stop()
-        observer.plot(
-            dark=dark,
-            white_axis=white_axis,
-            no_legend=no_legend,
-            no_star=no_star
-        )
+        #xx comment subsequent lines
+        # observer.plot(
+        #      dark=dark,
+        #      white_axis=white_axis,
+        #      no_legend=no_legend,
+        #      no_star=no_star
+        #  )
 
     print('Please wait patiently {} seconds. Thanks.'.format(run_time))
 
@@ -258,7 +278,10 @@ def run_simulation(
     for f in fish:
         threading.Thread(target=f.start).start()
 
-    threading.Thread(target=observer.start).start()
+    observer_thread = threading.Thread(target=observer.start)
+    observer_thread.start()
+
 
     # Ciao stops run time
     threading.Timer(run_time, stop).start()
+    observer_thread.join() #xx uncomment
