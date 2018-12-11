@@ -44,6 +44,7 @@ class Observer():
         environment,
         fish,
         channel,
+        neighbor_distance = 100,
         clock_freq=1,
         fish_pos=None,
         verbose=False
@@ -77,6 +78,7 @@ class Observer():
         self.x = []
         self.y = []
         self.o = []
+        self.neighbor_distances = []
         self.lin_speed = []
         self.ang_speed = []
         self.c = []
@@ -92,6 +94,7 @@ class Observer():
             self.x.append([])
             self.y.append([])
             self.o.append([])
+            self.neighbor_distances.append([])
             self.lin_speed.append([])
             self.ang_speed.append([])
 
@@ -356,6 +359,15 @@ class Observer():
                 self.track_info = None
                 self.not_saw_info = 0
 
+    def get_neighbor_distances(self, fish_id):
+        # For Turing Learning, track neighbor distances
+        # (all of them)
+        distances = []
+        for i in range(self.num_nodes):
+            if i != fish_id:
+                distances.append(self.environment.neighbor_distance(fish_id, i))
+        return distances
+
     def eval(self):
         """Save the position and connectivity status of the fish.
         """
@@ -368,11 +380,13 @@ class Observer():
         total_speed = 0
 
         for i in range(self.num_nodes):
+            # Tracking x, y, and orientation is useful both for
+            # visualization and learning
             self.x[i].append(self.environment.node_pos[i, 0])
             self.y[i].append(self.environment.node_pos[i, 1])
             self.o[i].append(self.fish[i].orientation)
 
-            # also collect linear and angular speed
+            # also collect and calculate linear and angular speed
             if len(self.x[i]) > 2:
                 prev_x = self.x[i][-2]
                 curr_x = self.x[i][-1]
@@ -382,21 +396,20 @@ class Observer():
 
                 prev_orient = self.o[i][-2]
                 curr_orient = self.o[i][-1]
-                self.lin_speed[i].append(np.linalg.norm( \
-                                                        np.array(prev_x, prev_y) -  \
-                                                        np.array(curr_x, curr_y)) \
-                                                       / self.clock_speed)
-                self.ang_speed[i].append((curr_orient - prev_orient) / self.clock_speed)
+
+                # normalize by max speed, assume 9
+                speed = np.linalg.norm( \
+                                        np.array(prev_x, prev_y) -  \
+                                        np.array(curr_x, curr_y)) \
+                                        / self.clock_speed
+                self.lin_speed[i].append(speed / 9)
+                ang_speed = (curr_orient - prev_orient) / self.clock_speed
+                self.ang_speed[i].append(ang_speed / (np.pi))
+                # collect neighbor distances here too so the matrix is the correct length
+                self.neighbor_distances[i].append(self.get_neighbor_distances(i))
 
 
             n = len(self.fish[i].neighbors)
-
-            # if n < self.fish[i].lim_neighbors[0]:
-            #     self.status[i].append(-1)
-            # elif n > self.fish[i].lim_neighbors[1]:
-            #     self.status[i].append(1)
-            # else:
-            #     self.status[i].append(0)
 
             neighbor_distances += sum(self.fish[i].neighbor_spacing)
             num_neighbor_pairs += len(self.fish[i].neighbor_spacing)
@@ -419,12 +432,6 @@ class Observer():
         """Plot the fish movement
         """
         ax = plt.gca()
-        #for fish_index in range(self.num_nodes):
-            #print("fish {}".format(self.fish[fish_index].id))
-            #print("linear speeds")
-            #print(self.lin_speed[fish_index])
-            #print("orientations")
-            #print(self.ang_speed[fish_index])
 
         if self.is_instructed and not no_star:
             plt.scatter(
@@ -516,7 +523,7 @@ class Observer():
                 legend.get_frame().set_facecolor('black')
                 for text in legend.get_texts():
                     plt.setp(text, color='white')
-        plt.title("alpha: {}, k_ar: {}, fish: {}".format(self.fish[0].alpha, self.fish[0].k_ar, len(self.fish)))
+        #plt.title("alpha: {}, k_ar: {}, fish: {}".format(self.fish[0].alpha, self.fish[0].k_ar, len(self.fish)))
 
         plt.show()
 
