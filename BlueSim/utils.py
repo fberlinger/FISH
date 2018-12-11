@@ -9,7 +9,7 @@ import threading
 from channel import Channel
 from environment import Environment
 from interaction import Interaction
-from fish import Fish
+from blindspot import Fish
 from observer import Observer
 
 
@@ -80,6 +80,7 @@ def generate_fish(
     channel,
     interaction,
     dynamics,
+    w_blindspot,
     target_dist,
     lim_neighbors,
     neighbor_weights=None,
@@ -126,6 +127,7 @@ def generate_fish(
             channel=channel,
             interaction=interaction,
             dynamics=dynamics,
+            w_blindspot=w_blindspot,
             target_dist=target_dist,
             lim_neighbors=lim_neighbors,
             neighbor_weight=neighbor_weights[i],

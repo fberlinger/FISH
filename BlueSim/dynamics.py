@@ -9,10 +9,10 @@ class Dynamics():
     """Simulates the dynamics of BlueBot with Euler integration according to its equations of motion.
 
     """
-    
+
     def __init__(self, environment, clock_freq=1):
         """Constructor
-        
+
         Args:
             environment (class): For global positions
             clock_freq (int, optional): For integration time
@@ -52,7 +52,7 @@ class Dynamics():
 
     def update_ctrl(self, dorsal, caudal, pect_r, pect_l):
         """Update BlueBots fin control. Those thrust forces are then used in the equations of motion.
-        
+
         Args:
             dorsal (float): Dorsal gain
             caudal (float): Caudal gain
@@ -71,10 +71,10 @@ class Dynamics():
 
     def simulate_move(self, source_id):
         """Simulates move starting from current global coordinates based on current velocities and fin control. Returns next global coordinates.
-        
+
         Args:
             source_id (int): Fish ID
-        
+
         Returns:
             np.array: 3D global next position
         """
@@ -124,7 +124,7 @@ class Dynamics():
             g_Pdot_r = g_T_r @ np.array([vx, vy, vz])
             g_P_r = g_P_r + self.deltat*np.transpose(g_Pdot_r)
 
-        self.environment.node_vel[source_id] = m_to_mm * g_Pdot_r
+        self.environment.node_vel[source_id] = m_to_mm * g_Pdot_r #xx
         self.environment.node_phi[source_id] = phi
         self.environment.node_vphi[source_id] = vphi
 

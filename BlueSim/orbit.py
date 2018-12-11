@@ -1,3 +1,5 @@
+"""Summary
+"""
 import math
 import numpy as np
 from queue import Queue
@@ -648,11 +650,11 @@ class Fish():
 
         # Orbiting
         #################################################
-        target_dist = 400
+        target_dist = 500
 
         if self.behavior == 'home':
             dist_filtered = np.linalg.norm(r_move_g)
-            if dist_filtered < target_dist * 1.2:
+            if dist_filtered < target_dist * 1.6:
                 self.behavior = 'transition'
             else:
                 self.home(r_move_g)

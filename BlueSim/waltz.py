@@ -1,3 +1,5 @@
+"""Summary
+"""
 import math
 import numpy as np
 from queue import Queue
@@ -113,6 +115,7 @@ class Fish():
         self.pect_r = 0
         self.pect_l = 0
         self.target_depth = 0
+        self.target_barycenter = 0
 
         self.d_center = 0
         self.body_length = 130
@@ -124,7 +127,7 @@ class Fish():
         self.neighbors = set()
 
         self.status = None
-        self.behavior = 'home'
+        self.behavior = 'orbit'
 
         self.info = None  # Some information
         self.info_clock = 0  # Time stamp of the information, i.e., the clock
@@ -577,7 +580,7 @@ class Fish():
             self.pect_r = 0
             self.behavior = 'orbit'
 
-    def orbit(self, r_move_g, target_dist):
+    def orbit(self, r_move_g, target_dist=0):
         """Orbits an object, e.g. two vertically stacked LEDs, at a predefined radius
 
         Uses four zones to control the orbit with pectoral and caudal fins. The problem is reduced to 2D and depth control is handled separately.
@@ -590,22 +593,25 @@ class Fish():
         dist = np.linalg.norm(r_move_g[0:2]) # 2D, ignoring z
         heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
 
+        if self.target_barycenter == 0:
+                self.target_barycenter = dist/2
+
         if dist > target_dist:
             if heading < 90:
-                self.caudal = 0.45
+                self.caudal = 0.4
                 self.pect_l = 0
                 self.pect_r = 0
             else:
-                self.caudal = 0.3
+                self.caudal = 0.25
                 self.pect_l = 1
                 self.pect_r = 0
         else:
             if heading < 90:
-                self.caudal = 0.45
+                self.caudal = 0.4
                 self.pect_l = 0
                 self.pect_r = 1
             else:
-                self.caudal = 0.45
+                self.caudal = 0.4
                 self.pect_l = 0
                 self.pect_r = 0
 
@@ -630,10 +636,11 @@ class Fish():
         centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
+        centroid_pos = self.comp_center(rel_pos)
         #centroid_pos = self.lj_force(neighbors, rel_pos)
         #self.d_center = np.linalg.norm(self.comp_center(rel_pos))
 
-        move = self.target_pos# + centroid_pos
+        move = centroid_pos
 
         # Global to Robot Transformation
         r_T_g = self.interaction.rot_global_to_robot(self.id)
@@ -642,24 +649,13 @@ class Fish():
         #obstacle_avoidance = r_T_g @ centroid_pos
 
         # Simulate dynamics and restrict movement #xx
-        self.depth_ctrl(r_move_g)
-        #self.depth_waltz(r_move_g)
+        #self.depth_ctrl(r_move_g)
+        self.depth_waltz(r_move_g)
         #self.home(r_move_g)
 
         # Orbiting
         #################################################
-        target_dist = 400
-
-        if self.behavior == 'home':
-            dist_filtered = np.linalg.norm(r_move_g)
-            if dist_filtered < target_dist * 1.2:
-                self.behavior = 'transition'
-            else:
-                self.home(r_move_g)
-        elif self.behavior == 'transition':
-            self.transition(r_move_g)
-        elif self.behavior == 'orbit':
-            self.orbit(r_move_g, target_dist)
+        self.orbit(r_move_g)
         # Orbiting
         #################################################
 

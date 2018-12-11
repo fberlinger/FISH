@@ -16,11 +16,11 @@ from eventcodes import (
 class Fish():
     """This class models each fish robot node in the collective from the fish'
     perspective.
-    
+
     Each fish has an ID, communicates over the channel, and perceives its
     neighbors and takes actions accordingly. In taking actions, the fish can
     weight information from neighbors based on their distance. Different collective behaviors run different methods of this class. It can perceive and move according to its perceptual and dynamics model, and updates its behavior on every clock tick.
-    
+
     Attributes:
         behavior (str): Behavior that fish follows
         body_length (int): Length of a BlueBot (130mm)
@@ -77,7 +77,7 @@ class Fish():
         verbose=False
     ):
         """Create a new fish
-        
+
         Arguments:
             id (TYPE): UUID of fish
             channel (Class): Communication channel
@@ -154,7 +154,7 @@ class Fish():
 
     def start(self):
         """Start the process
-        
+
         This sets `is_started` to true and invokes `run()`.
         """
         self.is_started = True
@@ -162,7 +162,7 @@ class Fish():
 
     def stop(self):
         """Stop the process
-        
+
         This sets `is_started` to false.
         """
         self.is_started = False
@@ -183,7 +183,7 @@ class Fish():
 
     def run(self):
         """Run the process recursively
-        
+
         This method simulates the fish and calls `eval` on every clock tick as
         long as the fish `is_started`.
         """
@@ -213,7 +213,7 @@ class Fish():
 
     def move_handler(self, event):
         """Handle move events, i.e., update the target position.
-        
+
         Arguments:
             event (Move): Event holding an x, y, and z target position
         """
@@ -223,7 +223,7 @@ class Fish():
 
     def ping_handler(self, neighbors, rel_pos, event):
         """Handle ping events
-        
+
         Arguments:
             neighbors {set} -- Set of active neighbors, i.e., nodes from which
                 this fish received a ping event.
@@ -245,7 +245,7 @@ class Fish():
 
     def homing_handler(self, event, pos):
         """Homing handler, i.e., make fish aggregated extremely
-        
+
         Arguments:
             event {Homing} -- Homing event
             pos {np.array} -- Position of the homing event initialtor
@@ -268,9 +268,9 @@ class Fish():
 
     def info_ext_handler(self, event):
         """External information handler
-        
+
         Always accept the external information and spread the news.
-        
+
         Arguments:
             event {InfoExternal} -- InfoExternal event
         """
@@ -288,10 +288,10 @@ class Fish():
 
     def info_int_handler(self, event):
         """Internal information event handler.
-        
+
         Only accept the information of the clock is higher than from the last
         information
-        
+
         Arguments:
             event {InfoInternal} -- Internal information event instance
         """
@@ -314,11 +314,11 @@ class Fish():
 
     def hop_count_handler(self, event):
         """Hop count handler
-        
+
         Initialize only of the last hop count event is 4 clocks old. Otherwise
         update the hop count and resend the new value only if its larger than
         the previous hop count value.
-        
+
         Arguments:
             event {HopCount} -- Hop count event instance
         """
@@ -352,9 +352,9 @@ class Fish():
 
     def start_hop_count_handler(self, event):
         """Hop count start handler
-        
+
         Always accept a new start event for a hop count
-        
+
         Arguments:
             event {StartHopCount} -- Hop count start event
         """
@@ -376,7 +376,7 @@ class Fish():
 
     def leader_election_handler(self, event):
         """Leader election handler
-        
+
         Arguments:
             event {LeaderElection} -- Leader election event instance
         """
@@ -396,13 +396,13 @@ class Fish():
 
     def weight_neighbor(self, rel_pos_to_neighbor): #xx obsolete with lj-pot?
         """Weight neighbors by the relative position to them
-        
+
         Currently only returns a static value but this could be tweaked in the
         future to calculate a weighted center point.
-        
+
         Arguments:
             rel_pos_to_neighbor {np.array} -- Relative position to a neighbor
-        
+
         Returns:
             float -- Weight for this neighbor
         """
@@ -410,9 +410,9 @@ class Fish():
 
     def start_leader_election_handler(self, event):
         """Leader election start handler
-        
+
         Always accept a new start event for a leader election
-        
+
         Arguments:
             event {StartLeaderElection} -- Leader election start event
         """
@@ -426,11 +426,11 @@ class Fish():
 
     def comp_center(self, rel_pos):
         """Compute the (potentially weighted) centroid of the fish neighbors
-        
+
         Arguments:
             rel_pos {dict} -- Dictionary of relative positions to the
                 neighboring fish.
-        
+
         Returns:
             np.array -- 3D centroid
         """
@@ -450,11 +450,11 @@ class Fish():
 
     def lj_force(self, neighbors, rel_pos):
         """lj_force derives the Lennard-Jones potential and force based on the relative positions of all neighbors and the desired self.target_dist to neighbors. The force is a gain factor, attracting or repelling a fish from a neighbor. The center is a point in space toward which the fish will move, based on the sum of all weighted neighbor positions.
-        
+
         Args:
             neighbors (set): Visible neighbors
             rel_pos (dict): Relative positions of visible neighbors
-        
+
         Returns:
             np.array: Weighted 3D direction based on visible neighbors
         """
@@ -482,7 +482,7 @@ class Fish():
 
     def depth_ctrl(self, r_move_g):
         """Controls diving depth based on direction of desired move.
-        
+
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
@@ -495,7 +495,7 @@ class Fish():
 
     def depth_waltz(self, r_move_g):
         """Controls diving depth in a pressure sensor fashion. Own depth is "measured", i.e. reveiled by the interaction. Depth control is then done based on a target depth coming from a desired goal location in the robot frame.
-        
+
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
@@ -511,7 +511,7 @@ class Fish():
 
     def home(self, r_move_g):
         """Homing behavior. Sets fin controls to move toward a desired goal location.
-        
+
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
@@ -541,7 +541,7 @@ class Fish():
 
     def collisions(self, r_move_g):
         """Local collision avoidance where r_move_g comes from a local Lennard-Jones potential.
-        
+
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
@@ -565,7 +565,7 @@ class Fish():
 
     def transition(self, r_move_g):
         """Transitions between homing and orbiting. Uses pectoral right fin to align tangentially with the orbit.
-        
+
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
         """
@@ -584,7 +584,7 @@ class Fish():
 
         Uses four zones to control the orbit with pectoral and caudal fins. The problem is reduced to 2D and depth control is handled separately.
         Could make fin frequencies dependent on distance and heading, i.e., use proportianl control.
-        
+
         Args:
             r_move_g (np.array): Relative position of desired goal location in robot frame.
             target_dist (int): Target orbiting radius, [mm]
@@ -613,17 +613,17 @@ class Fish():
 
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
-        
+
         The move is determined by the relative position of the centroid and a
         target position and is limited by the maximum fish speed.
-        
+
         Arguments:
             neighbors (TYPE): Description
             rel_pos (TYPE): Description
             neighbors {set} -- Set of active neighbors, i.e., other fish that
                 responded to the most recent ping event.
             rel_pos {dict} -- Relative positions to all neighbors
-        
+
         Returns:
             np.array -- Move direction as a 3D vector
         """
@@ -686,11 +686,11 @@ class Fish():
 
     def update_behavior(self):
         """Update the fish behavior.
-        
+
         This actively changes the cohesion strategy to either 'wait', i.e, do
         not care about any neighbors or 'signal_aircraft', i.e., aggregate with
         as many fish friends as possible.
-        
+
         In robotics 'signal_aircraft' is a secret key word for robo-fish-nerds
         to gather in a secret lab until some robo fish finds a robo aircraft.
         """
@@ -701,7 +701,7 @@ class Fish():
 
     def eval(self):
         """The fish evaluates its state
-        
+
         Currently the fish checks all responses to previous pings and evaluates
         its relative position to all neighbors. Neighbors are other fish that
         received the ping element.
@@ -759,7 +759,7 @@ class Fish():
 
     def communicate(self):
         """Broadcast all collected event messages.
-        
+
         This method is called as part of the second clock cycle.
         """
         for message in self.messages:

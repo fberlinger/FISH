@@ -65,10 +65,10 @@ class Interaction():
 
     def perceive_depth(self, source_id):
         """Perceive own depth. Simulation of pressure sensor.
-        
+
         Args:
             source_id (int): ID of fish requesting depth.
-        
+
         Returns:
             int: Absolute depth in global coordinate frame
         """
@@ -78,10 +78,10 @@ class Interaction():
 
     def rot_global_to_robot(self, source_id):
         """Rotate global coordinates to robot coordinates. Used before simulation of dynamics.
-        
+
         Args:
             source_id (id): Fish ID
-        
+
         Returns:
             np.array: 3x3 rotation matrix based on current orientation
         """
@@ -89,22 +89,29 @@ class Interaction():
 
         return np.array([[math.cos(phi), math.sin(phi), 0], [-math.sin(phi), math.cos(phi), 0], [0, 0, 1]])
 
-    def blind_spot(self, source_id, neighbors, rel_pos):
+    def blind_spot(self, source_id, neighbors, rel_pos, w_blindspot):
         """Omits neighbors within the blind spot behind own body.
-        
+
         Args:
             source_id (int): Fish ID
             neighbors (set): Set of visible neighbors
             rel_pos (dict): Relative positions of neighbors
         """
-        r_blockage = 25 # 50mm blocking corridor behind itself
-        vel = self.environment.node_vel[source_id]
+        no_neighbors_before = len(neighbors)
+
+        r_blockage = w_blindspot/2
+
+        g_vel = self.environment.node_vel[source_id]
+        r_T_g = self.rot_global_to_robot(source_id)
+        r_vel = r_T_g @ g_vel
+
+        #r_vel = self.environment.node_vel[source_id]
 
         candidates = neighbors.copy()
         for neighbor in candidates:
-            dot = np.dot(vel[:2], rel_pos[neighbor][:2])
+            dot = np.dot(r_vel[:2], rel_pos[neighbor][:2])
             if dot < 0:
-                mag_vel = max(0.001, np.linalg.norm(vel[:2]))
+                mag_vel = max(0.001, np.linalg.norm(r_vel[:2]))
                 dist_neighbor = max(0.001, np.linalg.norm(rel_pos[neighbor][:2]))
 
                 angle = abs(math.acos(dot / (mag_vel * dist_neighbor))) - math.pi / 2 # cos(a-b) = ca*cb+sa*sb = sa
@@ -112,9 +119,14 @@ class Interaction():
                 if  math.cos(angle) * dist_neighbor < r_blockage:
                     neighbors.remove(neighbor)
 
+
+        no_neighbors_after = len(neighbors)
+        if source_id == 5:
+            print('fish #5 sees {} neighbors before blindspot and {} after in current iteration'.format(no_neighbors_before, no_neighbors_after))
+
     def occlude(self, source_id, neighbors, rel_pos):
         """Omits invisible neighbors occluded by others.
-        
+
         Args:
             ource_id (int): Fish ID
             neighbors (set): Set of visible neighbors

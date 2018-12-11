@@ -117,15 +117,15 @@ class Environment():
                 source_index, new_pos, self.node_pos
             ))
 
-    def set_vel(self, source_index, old_pos, new_pos):
-        """Sets velocity of fish. Used to find orientation for blind spot in (old) vision experiments.
-        
-        Args:
-            source_index (id): Fish ID
-            old_pos (list): 3D coordinates of old position
-            new_pos (list): 3D coordinates of new position
-        """
-        self.node_vel[source_index] = new_pos - old_pos
+    # def set_vel(self, source_index, old_pos, new_pos): #xx
+    #     """Sets velocity of fish. Used to find orientation for blind spot in (old) vision experiments.
+
+    #     Args:
+    #         source_index (id): Fish ID
+    #         old_pos (list): 3D coordinates of old position
+    #         new_pos (list): 3D coordinates of new position
+    #     """
+    #     self.node_vel[source_index] = new_pos - old_pos
 
     def update_distance(self):
         """Calculate pairwise distances of every node
