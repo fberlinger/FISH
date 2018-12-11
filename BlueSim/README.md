@@ -18,7 +18,7 @@ Go to the subfolder `fishfood`, choose one of the following experiments, and cop
 - `millingabout.py`: Several robots orbit around a fixed center.
 - `waltz.py`: Two robots orbit around each other.
 
-Rename the copied file in `BlueSim to `fish.py`.
+Rename the copied file in `BlueSim` to `fish.py`.
 
 ## Run an Experiment with Simulated BlueBots
 
