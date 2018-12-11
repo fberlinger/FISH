@@ -34,7 +34,9 @@ jupyter notebook
 
 and within that notebook open the file ending in `.ipynb` corresponding to your chosen experiment.
 
-Please run each cell individually! **Warning**: Using `Run All` will not work
+You may change experimental parameters such as number of fish in the notebook. You could even change control code directly in `fish.py`and create your own experiment. However, doing that, you would also have to deal with your own bugs. You should rather not touch any other source code for `BlueSim`. Unexpected errors might occur.
+
+Please run each cell in the notebook individually! **Warning**: Using `Run All` will not work
 as the experiments start several threads for every fish and the code execution
 async, hence, Jupyter Notebook runs new cells to quickly before others finished.
 
