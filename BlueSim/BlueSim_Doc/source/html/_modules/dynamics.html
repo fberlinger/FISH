@@ -1,0 +1,214 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>dynamics &#8212; BlueSim 0.0.1 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">BlueSim 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for dynamics</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Helper class to simulate the dynamics of BlueBot. Simulation step should be set according to swarm size. Large numbers of robots require larger steps. This can be automated in the future.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="Dynamics"><a class="viewcode-back" href="../index.html#dynamics.Dynamics">[docs]</a><span class="k">class</span> <span class="nc">Dynamics</span><span class="p">():</span>
+
+    <span class="sd">&quot;&quot;&quot;Simulates the dynamics of BlueBot with Euler integration according to its equations of motion.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">environment</span><span class="p">,</span> <span class="n">clock_freq</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            environment (class): For global positions</span>
+<span class="sd">            clock_freq (int, optional): For integration time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span> <span class="o">=</span> <span class="n">environment</span>
+
+        <span class="c1"># Simulation Step and Time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="c1"># [s]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">t_simu</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">clock_freq</span> <span class="c1"># [s]</span>
+
+        <span class="c1"># Robot Specs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="mi">998</span> <span class="c1"># [kg/m^3], water density</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l_robot</span> <span class="o">=</span> <span class="mf">0.150</span> <span class="c1"># [m], including fin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">w_robot</span> <span class="o">=</span> <span class="mf">0.050</span> <span class="c1"># [m]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">h_robot</span> <span class="o">=</span> <span class="mf">0.080</span> <span class="c1"># [m]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_x</span> <span class="o">=</span> <span class="n">pi</span><span class="o">/</span><span class="mi">4</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_robot</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_robot</span> <span class="c1"># [m**2]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_y</span> <span class="o">=</span> <span class="n">pi</span><span class="o">/</span><span class="mi">4</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_robot</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_robot</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="mf">0.00075</span> <span class="c1"># [m**2], including fins</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_z</span> <span class="o">=</span> <span class="n">pi</span><span class="o">/</span><span class="mi">4</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">l_robot</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">w_robot</span> <span class="c1"># [m**2]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">A_phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">A_y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">m_robot</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="mf">0.25</span> <span class="c1"># [kg], including added mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I_robot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">m_robot</span><span class="o">/</span><span class="mi">5</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l_robot</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">h_robot</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="c1"># [kg*m**2]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_dx_fwd</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="c1"># c.f. cone</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_dx_bwd</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="c1"># c.f. cone</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_dy_static</span> <span class="o">=</span> <span class="mf">2.1</span> <span class="c1"># c.f. flat plate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_dz</span> <span class="o">=</span> <span class="mf">0.7</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">C_dphi_static</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pect_dist</span> <span class="o">=</span> <span class="mf">0.055</span> <span class="c1"># [m]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">/</span> <span class="mi">6</span> <span class="c1"># [rad]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_buoy</span> <span class="o">=</span> <span class="mf">0.010</span> <span class="c1"># [N]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vx_max</span> <span class="o">=</span> <span class="mf">0.160</span> <span class="c1"># [m/s]</span>
+
+        <span class="c1"># Initialize Control</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_caud</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># [N]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_PR</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># [N]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_PL</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># [N]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_dors</span> <span class="o">=</span> <span class="mi">0</span> <span class="c1"># [N]</span>
+
+<div class="viewcode-block" id="Dynamics.update_ctrl"><a class="viewcode-back" href="../index.html#dynamics.Dynamics.update_ctrl">[docs]</a>    <span class="k">def</span> <span class="nf">update_ctrl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dorsal</span><span class="p">,</span> <span class="n">caudal</span><span class="p">,</span> <span class="n">pect_r</span><span class="p">,</span> <span class="n">pect_l</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update BlueBots fin control. Those thrust forces are then used in the equations of motion.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dorsal (float): Dorsal gain</span>
+<span class="sd">            caudal (float): Caudal gain</span>
+<span class="sd">            pect_r (float): Pectoral right gain</span>
+<span class="sd">            pect_l (float): Pectoral left gain</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">F_caud_max</span> <span class="o">=</span> <span class="mf">0.020</span> <span class="c1"># [N]</span>
+        <span class="n">F_PR_max</span> <span class="o">=</span> <span class="mf">0.006</span> <span class="c1"># [N]</span>
+        <span class="n">F_PL_max</span> <span class="o">=</span> <span class="mf">0.006</span> <span class="c1"># [N]</span>
+        <span class="n">F_dors_max</span> <span class="o">=</span> <span class="mf">0.020</span> <span class="c1"># [N]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_caud</span> <span class="o">=</span> <span class="n">caudal</span> <span class="o">*</span> <span class="n">F_caud_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_PR</span> <span class="o">=</span> <span class="n">pect_r</span> <span class="o">*</span> <span class="n">F_PR_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_PL</span> <span class="o">=</span> <span class="n">pect_l</span> <span class="o">*</span> <span class="n">F_PL_max</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">F_dors</span> <span class="o">=</span> <span class="n">dorsal</span> <span class="o">*</span> <span class="n">F_dors_max</span></div>
+
+<div class="viewcode-block" id="Dynamics.simulate_move"><a class="viewcode-back" href="../index.html#dynamics.Dynamics.simulate_move">[docs]</a>    <span class="k">def</span> <span class="nf">simulate_move</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Simulates move starting from current global coordinates based on current velocities and fin control. Returns next global coordinates.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_id (int): Fish ID</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.array: 3D global next position</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mm_to_m</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">1000</span>
+        <span class="n">m_to_mm</span> <span class="o">=</span> <span class="mi">1000</span>
+
+        <span class="n">g_P_r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,))</span>
+        <span class="n">g_Pdot_r</span> <span class="o">=</span> <span class="n">mm_to_m</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">node_vel</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span>
+        <span class="n">phi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">node_phi</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span>
+        <span class="n">vphi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">node_vphi</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span>
+
+        <span class="n">r_T_g</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+        <span class="n">r_Pdot_r</span> <span class="o">=</span> <span class="n">r_T_g</span> <span class="o">@</span> <span class="n">g_Pdot_r</span>
+        <span class="n">vx</span> <span class="o">=</span> <span class="n">r_Pdot_r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">vy</span> <span class="o">=</span> <span class="n">r_Pdot_r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">vz</span> <span class="o">=</span> <span class="n">r_Pdot_r</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">t_simu</span><span class="o">*</span><span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="p">)):</span>
+            <span class="c1"># Equations of Motion</span>
+            <span class="n">x_dot</span> <span class="o">=</span> <span class="n">vx</span>
+            <span class="n">y_dot</span> <span class="o">=</span> <span class="n">vy</span>
+            <span class="n">z_dot</span> <span class="o">=</span> <span class="n">vz</span>
+            <span class="n">phi_dot</span> <span class="o">=</span> <span class="n">vphi</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">C_dphi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_dphi_static</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_dphi_static</span> <span class="o">*</span> <span class="mi">9</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x_dot</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">vx_max</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">C_dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_dy_static</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_dy_static</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x_dot</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">vx_max</span>
+            <span class="k">if</span> <span class="n">x_dot</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">C_dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_dx_fwd</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">C_dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">C_dx_bwd</span>
+
+            <span class="n">vx_dot</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">m_robot</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F_caud</span> <span class="o">-</span> <span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">F_PL</span> <span class="o">-</span> <span class="n">sin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">F_PR</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">C_dx</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">A_x</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">x_dot</span><span class="p">)</span><span class="o">*</span><span class="n">x_dot</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">vy_dot</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">m_robot</span> <span class="o">*</span> <span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">F_PL</span> <span class="o">-</span> <span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">F_PR</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">C_dy</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">A_y</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">y_dot</span><span class="p">)</span><span class="o">*</span><span class="n">y_dot</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">vz_dot</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">m_robot</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">F_dors</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">F_buoy</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">C_dz</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">A_z</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">z_dot</span><span class="p">)</span><span class="o">*</span><span class="n">z_dot</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">vphi_dot</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">I_robot</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_dist</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">F_PL</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">pect_dist</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pect_angle</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">F_PR</span> <span class="o">-</span> <span class="mi">1</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">C_dphi</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">A_phi</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">phi_dot</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">l_robot</span><span class="o">/</span><span class="mi">6</span><span class="o">*</span><span class="n">phi_dot</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+            <span class="c1"># Euler Integration</span>
+            <span class="n">vx</span> <span class="o">=</span> <span class="n">x_dot</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="o">*</span><span class="n">vx_dot</span>
+            <span class="n">vy</span> <span class="o">=</span> <span class="n">y_dot</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="o">*</span><span class="n">vy_dot</span>
+            <span class="n">vz</span> <span class="o">=</span> <span class="n">z_dot</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="o">*</span><span class="n">vz_dot</span>
+
+            <span class="n">phi</span> <span class="o">=</span> <span class="n">phi</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="o">*</span><span class="n">phi_dot</span>
+            <span class="n">vphi</span> <span class="o">=</span> <span class="n">phi_dot</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="o">*</span><span class="n">vphi_dot</span>
+
+            <span class="c1"># Robot to Global Transformation</span>
+            <span class="n">g_T_r</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="o">-</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">),</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+            <span class="n">g_Pdot_r</span> <span class="o">=</span> <span class="n">g_T_r</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">vx</span><span class="p">,</span> <span class="n">vy</span><span class="p">,</span> <span class="n">vz</span><span class="p">])</span>
+            <span class="n">g_P_r</span> <span class="o">=</span> <span class="n">g_P_r</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">deltat</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">g_Pdot_r</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">node_vel</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">m_to_mm</span> <span class="o">*</span> <span class="n">g_Pdot_r</span> <span class="c1">#xx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">node_phi</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">phi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">node_vphi</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">vphi</span>
+
+        <span class="k">return</span> <span class="n">m_to_mm</span> <span class="o">*</span> <span class="n">g_P_r</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">BlueSim 0.0.1 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Florian Berlinger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>
