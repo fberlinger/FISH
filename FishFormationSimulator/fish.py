@@ -412,18 +412,6 @@ class Fish():
 
     # Start of Magaly's code 
     #Lists of target formations 
-    '''
-    0) Trigonal planar: Three neighbors f_i is the center of the neighbors each neighbor is 120 degrees from each other.
-    1) Triangle: Two neighbors. 60 degrees between my two neighbors. 
-    2) Pentagon: Five neighbors. 72 degrees from eahc other. 
-    3) Square planar: 
-    4) T-shape: 
-
-    '''
-    
-    #This function needs to be updated if wanting to include other physical obstacles
-    #A fish is ocluded if it is between the lines from the current fish and the front of a neighbor fish 
-    #and the current fish to the tail of the neighbor fish. 
     def not_ocluded(self, rel_pos, r, fish_size):
         rel_pos = rel_pos.sort_values(['dist'])
         not_visible_fish = []
@@ -441,8 +429,165 @@ class Fish():
                             not_visible_fish.append(index2)
                             
         return rel_pos, not_visible_fish
-    
-    def visible_neighbors (self, rel_pos):
+    '''
+    0) Trigonal planar: Three neighbors f_i is the center of the neighbors each neighbor is 120 degrees from each other.
+    1) Triangle: Two neighbors. 60 degrees between my two neighbors. 
+    2) Global Fibonacci:  
+    3) Global Triangle: 
+    '''
+    #Global algorithms 
+    #Fibonacci function
+    def F(self,i):
+        return ((1+sqrt(5))**i-(1-sqrt(5))**i)/(2**i*sqrt(5))
+    #Returns parameters for fibonacci formation
+    def get_row_n(self,front_neighbors):
+        linespace = 2
+        my_index = front_neighbors+linespace
+        f_i =0
+        i =0
+        while(f_i<my_index):
+            f_i = self.F(i)
+            i+=1
+        return my_index-1, i-3,np.round(self.F(i-2)), np.round(self.F(i-1))
+    #returns dataframe with the target locations 
+    def fibonacci_formation(self,nfish,linespace):
+        columns = ['X', 'Y', 'dist']
+        index= np.arange(nfish)
+        df= pd.DataFrame(index=index, columns=columns)
+        df= df.fillna(0.0)
+        #print(df)
+        for i,row in df.iterrows():
+            my_index, my_row, rs, re = self.get_row_n(i)
+            if(my_row<=0):
+                my_index =0
+                my_row =0
+            if(my_index in [0,1,2]):
+                df.iloc[i]['X'] = my_row*linespace
+                df.iloc[i]['dist'] = my_index
+                df.iloc[i]['Y'] = 0
+
+            else:
+                df.iloc[i]['X'] = my_row*linespace
+                df.iloc[i]['dist'] = my_index
+                if(re-rs ==2):
+                    if(my_index==3):
+                        df.iloc[i]['Y'] =-.5
+                    else:
+                        df.iloc[i]['Y'] =.5
+                elif((re-rs)%2==0):
+                    ys = np.linspace(-(re-rs)/2,int(re-rs)/2,int(re-rs))
+                    df.iloc[i]['Y'] = ys[int(my_index -rs)]
+                else:
+                    df.iloc[i]['Y'] = ceil((re-rs)/2) - (re-my_index)
+        df['X'] = -df['X']
+        return df
+
+    #############################################################################################
+    #Triangle_function
+    def T(self,i):
+        return i*(i+1)/2
+    def get_row_n2(self,front_neighbors):
+        if(front_neighbors==0):
+            return 0,0,0,0
+        else:
+            my_index=front_neighbors 
+            f_i =0
+            i =1
+            while(f_i<=my_index):
+                f_i = self.T(i)
+                i+=1        
+            return my_index, i-2, self.T(i-1)-i+1,self.T(i)-(i+1)
+    #Triangle formation map 
+    def triangle_formation(self,nfish,linespace):
+        columns = ['X', 'Y', 'dist']
+        index= np.arange(nfish)
+        df= pd.DataFrame(index=index, columns=columns)
+        df= df.fillna(0.0)
+        for i,row in df.iterrows():
+            my_index, my_row, rs, re = self.get_row_n2(i)
+            df.iloc[i]['X'] = my_row*linespace
+            df.iloc[i]['dist'] = my_index
+            if(re-rs>0):
+                ys = np.linspace(-(re-rs)/2,(re-rs)/2,int(re-rs)+1)
+                df.iloc[i]['Y'] = ys[int(my_index-rs)]
+        df['X'] = -df['X']
+        return df
+    #returns the target formation
+    def mapped_formation_move(self,rel_pos,n_fish,map_type,linespace):
+        if(map_type==0):
+            df = self.fibonacci_formation(n_fish,linespace)     
+        elif(map_type==1):
+            df = self.triangle_formation(n_fish,linespace)
+        return self.define_target(rel_pos, df)
+    def nearest(self,target_map, neighbor_pos):
+        target_map['dist'] = np.sqrt( (target_map.X-neighbor_pos['X'])**2 + (target_map.Y-neighbor_pos['Y'])**2)
+        target_map.sort_values(['dist'],ascending =True)
+        return target_map.iloc[0]
+    #function returns the target point for my fish 
+    def define_target(self,rel_pos,target_map):
+        #Define Leader
+        r = 1.5
+        tolerance = self.tolerance
+        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
+        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
+        front_neighbors = df[df['X']>0]
+        front_neighbors = front_neighbors.sort_values(['X'],ascending =False)
+        rel_pos = df.sort_values(['dist'],ascending =True)
+        my_target = [0,0]
+        #meaning I am the leader 
+        if(self.fish_total_error >= self.tolerance):
+            if(len(front_neighbors)==0):
+                if(len(df[df['dist']<=r])>0):
+                    self.fish_total_error = 2*self.tolerance
+                    return [0,0]
+                return [0,0]
+            elif(len(front_neighbors)>0):
+                leader = front_neighbors.iloc[0]
+                my_leader_x =leader['X']
+                my_leader_y = leader['Y']
+                target_map = target_map.sort_values(['X'],ascending =False)
+                #No one should try to get the leader for now
+                target_map.iloc[1:]
+                #Transpose target map
+                target_map['X'] += my_leader_x
+                target_map['Y'] += my_leader_y
+                target_map['dist'] = np.sqrt( (target_map.X)**2 + (target_map.Y)**2)
+                target_map = target_map.sort_values(['dist'],ascending =True)
+
+
+                if(len(target_map[target_map['dist']<0.5])>0 and len(rel_pos[rel_pos['dist']<=r])==0):
+                    self.fish_total_error = target_map.iloc[0]['dist']
+                    return [0,0]
+
+                me =  pd.DataFrame([[0, 0, 0]])
+                rel_pos.append(me)
+                my_target = [target_map.iloc[0]['X'],target_map.iloc[0]['Y']]
+                target_map = target_map.sort_values(['dist'],ascending =True)
+                #In this case I assign positions to map targets so that I avoid collision
+                for i, a in target_map.iterrows():
+                    b = self.nearest(rel_pos, a)
+                    if(b.X==0 and b.Y == 0):
+                        if(len(rel_pos[rel_pos['dist']<=r])>0):
+                            self.fish_total_error = a.dist + self.tolerance
+                        return [a.X,a.Y]
+                    c = self.nearest(target_map, b)
+                    if(a.X == c.X and a.Y == c.Y):
+                        rel_pos.drop(rel_pos.index[i]) 
+                        target_map.drop(target_map.index[i])
+                    elif(a.dist<= b.dist):
+                        self.fish_total_error = abs(a.dist)
+                        if(self.fish_total_error >= self.tolerance):
+                            self.fish_total_error = abs(a.dist)
+                            return [a.X, a.Y]
+                        else: 
+                            return [0,0]
+            else: 
+                self.fish_total_error = 0 
+                return [0,0]
+        return my_target
+   
+    #LOCAL FORMATIONS: 
+    def visible_neighbors (self, my_neighbors):
         """Returns a dataframe of neighbors that are visible to the fish depending on target formation.
         Arguments:
             rel_pos {dict} -- relative position of all neighbors 
@@ -451,50 +596,322 @@ class Fish():
             pandas.dataframe -- a dataframe of the neighbors of the fish that are needed for a certain formation
         """
         # This part of the code  uses the orientation of the fish to detect which neighbors are seen in front. 
-        orientation = self.orientation
-        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
-        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
-        df['front'] =0
-        #orientation= [orientation[1], -orientation[0]] 
-        #for i,row in df.iterrows():
-            #front_n= ((row.X - orientation[0])*(orientation[0]) - (row.Y)*(orientation[1]))
-            #front_n= np.cross([row.X-orientation[0],row.Y-orientation[1]], np.negative(orientation))
-            #df.at[i, 'front'] = front_n
-        neighbors_front =  df[df['X']>=0]
-        neighbors_front = neighbors_front.sort_values(['dist','X'], ascending =True )
         if (self.formation_num == 0):
-            if(len(neighbors_front)>=3):
-                return neighbors_front.iloc[:3]
-            else: 
-                return neighbors_front
-        elif (self.formation_num == 1):
-            if(len(neighbors_front)>=2):
-                return neighbors_front.iloc[:2]
-            else: 
-                return neighbors_front
-        elif (self.formation_num == 2):
+            my_neighbors['front'] = 0
+            orientation= self.orientation 
+            orientation= [orientation[1], -orientation[0]] 
+            for i,row in my_neighbors.iterrows():
+                front_n= ((row.X - orientation[0])*(orientation[0]) - (row.Y)*(orientation[1]))
+                #front_n= np.cross([row.X-orientation[0],row.Y-orientation[1]], np.negative(orientation))
+                my_neighbors.at[i, 'front'] = front_n
+            neighbors_front =  my_neighbors[my_neighbors['front']>=0]
+            neighbors_front = neighbors_front.sort_values(['dist','X'], ascending =True )
             if(len(neighbors_front)>=3):
                 return neighbors_front.iloc[:3]
             else: 
                 return neighbors_front 
-        return rel_pos_vis_neighbors
-  
+        elif (self.formation_num == 1):
+            orientation= self.orientation 
+            orientation= [orientation[1], -orientation[0]] 
+            my_neighbors['front'] = 0
+            for i,row in my_neighbors.iterrows():
+                front_n= ((row.X - orientation[0])*(orientation[0]) - (row.Y)*(orientation[1]))
+                #front_n= np.cross([row.X-orientation[0],row.Y-orientation[1]], np.negative(orientation))
+                my_neighbors.at[i, 'front'] = front_n
+            neighbors_front =  my_neighbors[my_neighbors['front']>=0]
+            neighbors_front = neighbors_front.sort_values(['dist','X'], ascending =True )
+            if(len(neighbors_front)>=2):
+                neighbors_front = neighbors_front.drop_duplicates()
+                return neighbors_front.iloc[:2]
+            else: 
+                return neighbors_front
+            
+        return neighbors_front 
+   
+    def one_reference(self, n1,n2):
+        if(np.array_equal(n1,n2)):
+            return True
+        if(np.count_nonzero(np.round(n2,1))==0):
+            return True
+        if(np.count_nonzero(np.round(n1,1))==0):
+            return True
+        return False
+
+    def num_references(self, n1, n2, n3):
+        num_references = 3
+        if(np.count_nonzero(np.round(n2,1))==0):
+            num_references -= 1
+        if(np.count_nonzero(np.round(n1,1))==0):
+            num_references -= 1
+        if(np.count_nonzero(np.round(n3,1))==0):
+            num_references -= 1
+        if(np.array_equal(n1,n2)):
+            num_references -= 1
+        if(np.array_equal(n3,n2)):
+            num_references -= 1
+        if(np.array_equal(n1,n3)):
+            num_references -= 1
+        return num_references
+
+    def possible_moves(self,linespace, formation_num, *neighbors):
+        '''
+        Returns the possible positions this fish has in order to arrive to a neighbor. 
+        '''
+        if(formation_num == 1):
+            #either n1 or n2 equals zero 
+            n1 = neighbors[0]
+            n2 = neighbors[1]
+            if(self.one_reference(n1,n2)):
+                n = [0,0] 
+                x_target = linespace*np.sin(np.deg2rad(60))
+                y_target = linespace*np.cos(np.deg2rad(60))
+                if(np.count_nonzero(np.round(n2,1))==0):
+                    if(np.count_nonzero(np.round(n1,1))==0):
+                        n=[0,0]
+                    else:
+                        n= n1
+                elif(np.count_nonzero(np.round(n1,1))==0):
+                    if(np.count_nonzero(np.round(n2,1))==0):
+                        n=[0,0]
+                    else:
+                        n= n2
+                elif(np.array_equal(n1,n2)):
+                    n = n1
+                m1 = [n[0] + x_target, n[1]+y_target]
+                m2 = [n[0], n[1]+y_target]
+                m3 = [n[0] + x_target, n[1]]
+                m4 = [n[0] - x_target, n[1]+y_target]
+                m5 = [n[0] + x_target, n[1]-y_target]
+                m6 = [n[0] - x_target, n[1]-y_target]
+                return[m1,m2,m3,m4,m5,m6]
+            else:
+                m = np.nan_to_num([(n1[0]+n2[0])/2,(n1[1]+n2[1])/2])
+                ri = (n2[1]-n1[1])
+                ru = (n2[0]-n1[0])
+                if(ru==0):
+                    slope = 0
+                else: 
+                    slope = -1/(ri/ru)
+                b = m[1]- slope*m[0]
+                p = [m[0]-1,(m[0]-1)*slope+b]
+                v= np.subtract(m,p)
+                m1 =np.add(m,v/np.linalg.norm(v)*linespace * np.sqrt(3))
+                m2 = np.subtract(m,(v/np.linalg.norm(v)*linespace*np.sqrt(3)))
+            return [m1 , m2]
+        elif(formation_num==0):
+            n1 = neighbors[0]
+            n2 = neighbors[1]
+            n3 = neighbors[2]
+            x_target = linespace*np.sin(np.deg2rad(120))
+            y_target = linespace*np.cos(np.deg2rad(120))
+            if(self.num_references(n1,n2, n3)<=1):    
+                if(np.count_nonzero(np.round(n1,1))==0):
+                    if(np.count_nonzero(np.round(n2,1))==0):
+                        if(np.count_nonzero(np.round(n3,1))):
+                            n=[0,0]
+                        else: 
+                            n= n3
+                    else:
+                        n= n2
+                else: 
+                    n= n1
+                
+                if(np.array_equal(n1,n2) or np.array_equal(n1,n3)):
+                    n = n1
+                elif(np.array_equal(n2,n3)):
+                    n = n2
+                if(n[0]<0):
+                    m1 = [n[0]+x_target, n[1]+ y_target]
+                    m2 = [n[0]+ linespace, n[1]]
+                    return [m1,m2]
+                else: 
+                    m1 = [n[0]-x_target, n[1]- y_target]
+                    m2 = [n[0]+ linespace , n[1]]
+                    return [m1,m2]
+            elif(self.num_references(n1,n2, n3)==2):
+                #Now discard the reference that is equal to zero 
+                if(np.count_nonzero(np.round(n1,1))==0):
+                    n1 = n2
+                    n2 = n3
+                    m = np.nan_to_num([(n1[0]+n2[0])/2,(n1[1]+n2[1])/2])
+                    ri = (n2[1]-n1[1])
+                    ru = (n2[0]-n1[0])
+                    if(ru==0):
+                        slope = 0
+                    else: 
+                        if(ri==0):
+                            slope =0 
+                        else:
+                            slope = -1/(ri/ru)
+                    b = m[1]- slope*m[0]
+                    p = [m[0]-1,(m[0]-1)*slope+b]
+                    v= np.subtract(m,p)
+                    m1 =np.add(m,v/np.linalg.norm(v)*linespace * np.sqrt(3)/2)
+                    m2 = np.subtract(m,(v/np.linalg.norm(v)*linespace*np.sqrt(3))/2)
+                    return [m1 , m2]
+                else: 
+                    m = np.nan_to_num([(n1[0]+n2[0])/2,(n1[1]+n2[1])/2])
+                    ri = (n2[1]-n1[1])
+                    ru = (n2[0]-n1[0])
+                    if(ru==0):
+                        slope = 0
+                    else: 
+                        if(ri==0):
+                            slope =0 
+                        else:
+                            slope = -1/(ri/ru) 
+                    b= m[1]- slope*m[0]
+                    p = [m[0]-1,(m[0]-1)*slope+b]
+                    v= np.subtract(m,p)
+                    m1 =np.add(m,v/np.linalg.norm(v)*linespace * np.sqrt(3)/2)
+                    m2 = np.subtract(m,(v/np.linalg.norm(v)*linespace*np.sqrt(3))/2)
+                    return [m1 , m2]
+            else: 
+                m = np.nan_to_num([(n1[0]+n2[0])/2,(n1[1]+n2[1])/2])
+                ri = (n2[1]-n1[1])
+                ru = (n2[0]-n1[0])
+                if(ru==0):
+                    slope = 0
+                else:
+                    if(ri==0):
+                        slope =0 
+                    else:
+                        slope = -1/(ri/ru)
+                b = m[1]- slope*m[0]
+                p = [m[0]-1,(m[0]-1)*slope+b]
+                v= np.subtract(m,p)
+                m1 =np.add(m,v/np.linalg.norm(v)*linespace * np.sqrt(3)/2)
+                m2 = np.subtract(m,(v/np.linalg.norm(v)*linespace*np.sqrt(3)/2))
+                return [m1 , m2]
+        return [[0,0]]
 
     #This function returns the fitness level of the fish f_i given the target formation
-    def fitnes(self, my_neighbors,linespace):
+    def fitnes(self, my_neighbors,linespace, radius_neighbors):
         total_square_error = 0 
+        local_tolerance = 0.25
         if (self.formation_num == 0):
-            return 0.0
+            x_target = linespace*np.sin(np.deg2rad(120))
+            y_target = linespace*np.cos(np.deg2rad(120))
+            if(len(my_neighbors)==0):
+                #If I have no reference neighbors (I am the first of the school) I still have to check whether neighbors are very close. 
+                #If one or more neighbors are too close, then my fitness level will be increased so I move backwards and then can 
+                #make another move. 
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        return 3*self.tolerance
+                    else: 
+                        return 0 
+            elif(len(my_neighbors)==1):
+                neighbor = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                moves = self.possible_moves(linespace, self.formation_num, neighbor, [0,0], [0,0])
+                distances = []
+                for move in moves: 
+                    if(self.valid_move(radius_neighbors, move,local_tolerance)):
+                        d = np.sqrt( (move[0])**2 + (move[1])**2)
+                        distances.append(d)
+                    else: 
+                        distances.append(10)
+                total_square_error += np.min(distances)
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        total_square_error += 3*self.tolerance
+            elif(len(my_neighbors)==2):
+                n1 = np.nan_to_num([my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']])
+                n2 = np.nan_to_num([my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']])
+                moves = self.possible_moves(linespace, self.formation_num, n1, n2, [0,0])
+                distances = []
+                for move in moves: 
+                    if(self.valid_move(radius_neighbors, move, local_tolerance)):
+                        d = np.sqrt( (move[0])**2 + (move[1])**2)
+                        distances.append(d)
+                    else: 
+                        distances.append(10)
+                total_square_error += np.min(distances)
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        total_square_error += self.tolerance
+            elif(len(my_neighbors)>2):
+                n1 = np.nan_to_num([my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']])
+                n2 = np.nan_to_num([my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']])
+                n3 = np.nan_to_num([my_neighbors.iloc[2]['X'],my_neighbors.iloc[2]['Y']])
+                moves = self.possible_moves(linespace, self.formation_num, n1, n2, n3)
+                distances = []
+                for move in moves: 
+                    if(self.valid_move(radius_neighbors, move, local_tolerance)):
+                        d = np.sqrt( (move[0])**2 + (move[1])**2)
+                        distances.append(d)
+                    else: 
+                        distances.append(10)
+                total_square_error += np.min(distances)
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        total_square_error += self.tolerance
+                    else: 
+                        total_square_error += 0
         elif (self.formation_num == 1):
-            #Triangle formation
-            #x_target = linespace*np.sin(np.deg2rad(60))
-            #y_target = linespace*np.cos(np.deg2rad(60))
-            if(len(my_neighbors)>1):
-                for index in range(len(my_neighbors)): 
-                    total_square_error += linespace - my_neighbors.iloc[index]['dist']
-        elif(self.formation_num == 2): 
-            return 0.0
+            x_target = linespace*np.sin(np.deg2rad(60))
+            y_target = linespace*np.cos(np.deg2rad(60))
+            if(len(my_neighbors)==0):
+                #If I have no reference neighbors (I am the first of the school) I still have to check whether neighbors are very close. 
+                #If one or more neighbors are too close, then my fitness level will be increased so I move backwards and then can 
+                #make another move. 
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        return self.tolerance
+                    else: 
+                        return 0 
+            elif(len(my_neighbors)==1):
+                neighbor = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                moves = self.possible_moves(linespace, self.formation_num, neighbor, [0,0])
+                distances = []
+                for move in moves: 
+                    if(self.valid_move(radius_neighbors, move,local_tolerance)):
+                        d = np.sqrt( (move[0])**2 + (move[1])**2)
+                        distances.append(d)
+                    else: 
+                        distances.append(10)
+                total_square_error += np.min(distances)
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        total_square_error += 3*self.tolerance
+                    else: 
+                        total_square_error += 0
+            elif(len(my_neighbors)>1):
+                n1 = np.nan_to_num([my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']])
+                n2 = np.nan_to_num([my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']])
+                moves = self.possible_moves(linespace, self.formation_num, n1, n2)
+                distances = []
+                for move in moves: 
+                    if(self.valid_move(radius_neighbors, move, local_tolerance)):
+                        d = np.sqrt( (move[0])**2 + (move[1])**2)
+                        distances.append(d)
+                    else: 
+                        distances.append(10)
+                total_square_error += np.min(distances)
+                for i,row in radius_neighbors.iterrows():
+                    if((-local_tolerance <= round(row.X,1) <= local_tolerance) or  (-local_tolerance <= round(row.Y,1) <= local_tolerance)):
+                        total_square_error += self.tolerance
         return total_square_error
+
+    def valid_move(self, radius_neighbors, intended_move, local_tolerance):
+        """Checks whether intended move of my fish is available, a.k.a. no other fish are already in that position
+        Arguments:
+            radius neighbors pandas df  -- df to all of the neighbors in the formation visible to the fish  
+            intended_move [0,0] -- Array of intended location for this fish  
+            local tolerance {float}  -- Ideal space between floats.
+        Returns:
+            True/False whether there is a spot available of nor 
+        """
+        intended_move= np.round(np.nan_to_num(intended_move),1)
+        if(radius_neighbors.apply(lambda row: (((intended_move[0]-local_tolerance<=row.X <= intended_move[0]+ local_tolerance)
+            &(( intended_move[1]- local_tolerance <=row.Y <= intended_move[1]+local_tolerance)))), axis=1).sum()>0):
+            return False
+        else: 
+            if(np.count_nonzero(intended_move)>0):
+                return True
+            else:
+                False
+    
 
     def triangle_local(self,rel_pos,linespace,orientation):
         """Connect in a triangle formation with my nearest neighbors.
@@ -507,66 +924,144 @@ class Fish():
         """
         #Target values 
         #Given the linespace (hypothemuse)  calculate the ideal x and y distances  
-        local_tolerance = .0004
+        #Trasnform into dataframe and filter through the ones that are only 3 linespaces away
+        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
+        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
+        radius_neighbors = df[df['dist']<= 10*linespace]
+        radius_neighbors = radius_neighbors.sort_values(['dist'], ascending= True)
+        
+        local_tolerance = .25 
         x_target = linespace*np.sin(np.deg2rad(60))
         y_target = linespace*np.cos(np.deg2rad(60))
-        my_neighbors = self.visible_neighbors(rel_pos)
+
+        #These are the neighbors I will take into consideration to choose my position
+        my_neighbors = self.visible_neighbors(radius_neighbors)
         move = [0,0]
         #First we are going to check we indeed have access to the required number of neighbors
-        self.fish_total_error = abs(self.fitnes(my_neighbors, linespace))
-        if(len(my_neighbors)==0):
-            #If there is no visible neighbors then I remain in my position 
-            return [0,0]
-        elif(len(my_neighbors)==1):
-            #If there is only one visible neighbor I will align to it attempting to keep the overall angles 
-            #The target distance from the closest neighbor is equivalent to the linespace
-            if(abs(self.fitnes(my_neighbors, linespace))<= self.tolerance):
-                return [0,0]
-            else: 
-                return [my_neighbors.iloc[0]['X']-x_target,my_neighbors.iloc[0]['Y']-y_target]
+        self.fish_total_error = abs(self.fitnes(my_neighbors, linespace,radius_neighbors))
+        if(self.fish_total_error <= self.tolerance):
+             return [0,0]
         else:
-            #There are two neighbors so my final move will be a combination of the spaces between neighbors
-            #print(abs(self.fitnes(my_neighbors, linespace)))
-            if(abs(self.fitnes(my_neighbors, linespace))<= self.tolerance):
-                return [0,0]
+            if(len(my_neighbors)==0):
+                    return [-1,0]
+            elif(len(my_neighbors)==1):
+                    #drop your reference neighbor from the radious neighbors
+                    radius_neighbors = radius_neighbors[1:]
+                    n1 = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                    possible_moves = pd.DataFrame(self.possible_moves(linespace, self.formation_num,n1, [0,0]), columns=['X', 'Y'])
+                    possible_moves['dist'] = np.sqrt( (possible_moves.X)**2 + (possible_moves.Y)**2)
+                    possible_moves = possible_moves.sort_values(['dist'],ascending =True)
+                    while(possible_moves.shape[0]>0 ):
+                        move = possible_moves.iloc[0]
+                        if(radius_neighbors.shape[0]>0):
+                            b = self.nearest(radius_neighbors, move)
+                            if(b.dist <= move.dist):
+                                return [move['X'], move['Y']]
+                            else: 
+                                possible_moves.iloc[1:]
+                                radius_neighbors.iloc[1:]
+                        else: 
+                            return [move['X'], move['Y']]
+                    return [0,0]
+
+                #1)get all of your possible moves given your reference neighbors
             else: 
+                radius_neighbors = radius_neighbors[2:]
                 n1 = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
                 n2 = [my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']]
-                dist_between_neighbors =  np.sqrt( (n1[0]-n2[0])**2 + (n1[0]-n2[0])**2)
-                if(linespace - local_tolerance <= dist_between_neighbors <= linespace + local_tolerance): 
-                    #My neighbors are spaced correctly, now I have to form the triangle between them 
-                    #Here I can check which neighbor has the higher x but I do not like that 
-                    m = [(n1[0]+n2[0])/2,(n1[1]+n2[1])/2]
-                    slope = -1/((n2[1]-n1[1])/(n2[0]-n1[0]))
-                    b = m[1]- slope*m[0]
-                    p = [m[0]-2,(m[0]-2)*slope+b]
-                    v= np.subtract(m,p)
-                    move1 =np.add(m,v/np.linalg.norm(v)*linespace)
-                    move2 = np.subtract(m,v/np.linalg.norm(v)*linespace)
-                    d1 = np.sqrt( (move1[0])**2 + (move1[1])**2)
-                    d2 = np.sqrt( (move2[0])**2 + (move2[1])**2)
-                    if(d1>=d2):
-                        move = move2
+                possible_moves = pd.DataFrame(self.possible_moves(linespace, self.formation_num,n1, n1), columns=['X', 'Y'])
+                possible_moves['dist'] = np.sqrt( (possible_moves.X)**2 + (possible_moves.Y)**2)
+                possible_moves = possible_moves.sort_values(['dist'],ascending =True)
+                while(possible_moves.shape[0]>0 ):
+                    move = possible_moves.iloc[0]
+                    if(radius_neighbors.shape[0]>0):
+                        b = self.nearest(radius_neighbors, move)
+                        if(b.dist <= move.dist):
+                            return [move['X'], move['Y']]
+                        else: 
+                            possible_moves.iloc[1:]
+                            radius_neighbors.iloc[1:]
                     else: 
-                        move = move1
-                    #[mid_point[0]-(mid_point[0]-n1[0])*np.sqrt(3), mid_point[1]+(mid_point[1]-n1[1])*np.sqrt(3)] #np.add(mid_point,np.dot([n[1],-n[0]],linespace))
-                    #print(n1,n2,move)
+                        return [move['X'], move['Y']]
+                return [0,0]
+            
+    def trigonal_planar(self,rel_pos,linespace,orientation):
+        df = pd.DataFrame.from_dict(rel_pos,orient = 'index', columns=['X', 'Y'])
+        df['dist'] = np.sqrt( (df.X)**2 + (df.Y)**2)
+        radius_neighbors = df[df['dist']<= 10*linespace]
+        
+        local_tolerance = .25 
+        x_target = linespace*np.sin(np.deg2rad(120))
+        y_target = linespace*np.cos(np.deg2rad(120))
 
-                else: 
-                    #Select one of your closest neighbors, the one with the higher x  align to it 
-                    if (n1[0]>n2[0]):
-                       move = [(my_neighbors.iloc[0]['X']-x_target),my_neighbors.iloc[0]['Y']-y_target]
+        #These are the neighbors I will take into consideration to choose my position
+        my_neighbors = self.visible_neighbors(radius_neighbors)
+        self.fish_total_error = abs(self.fitnes(my_neighbors, linespace,radius_neighbors))
+        if(self.fish_total_error<= self.tolerance):
+            return [0,0]
+        else: 
+            if(len(my_neighbors)==0):
+                    return [-1,0]
+            elif(len(my_neighbors)==1):
+                    #drop your reference neighbor from the radious neighbors
+                    radius_neighbors = radius_neighbors[1:]
+                    n1 = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                    possible_moves = pd.DataFrame(self.possible_moves(linespace, self.formation_num,n1, [0,0],[0,0]), columns=['X', 'Y'])
+                    possible_moves['dist'] = np.sqrt( (possible_moves.X)**2 + (possible_moves.Y)**2)
+                    possible_moves = possible_moves.sort_values(['dist'],ascending =True)
+                    while(possible_moves.shape[0] >0 ):
+                        move = possible_moves.iloc[0]
+                        if(radius_neighbors.shape[0]>0):
+                            b = self.nearest(radius_neighbors, move)
+                            if(b.dist <= move.dist):
+                                return [move['X'], move['Y']]
+                            else: 
+                                possible_moves.iloc[1:]
+                                radius_neighbors.iloc[1:]
+                        else: 
+                            return [move['X'], move['Y']]
+                    return [0,0]
+
+            #1)get all of your possible moves given your reference neighbors
+            elif(len(my_neighbors)==2): 
+                radius_neighbors = radius_neighbors[2:]
+                n1 = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                n2 = [my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']]
+                possible_moves = pd.DataFrame(self.possible_moves(linespace, self.formation_num,n1, n1, [0,0]), columns=['X', 'Y'])
+                possible_moves['dist'] = np.sqrt( (possible_moves.X)**2 + (possible_moves.Y)**2)
+                possible_moves = possible_moves.sort_values(['dist'],ascending =True)
+                while(len(possible_moves) >0 ):
+                    move = possible_moves.iloc[0]
+                    if(radius_neighbors.shape[0]>0):
+                        b = self.nearest(radius_neighbors, move)
+                        if(b.dist <= move.dist):
+                            return [move['X'], move['Y']]
+                        else: 
+                            possible_moves.iloc[1:]
+                            radius_neighbors.iloc[1:]
                     else: 
-                       move = [(my_neighbors.iloc[1]['X']-x_target),my_neighbors.iloc[1]['Y']-y_target]
-                    # m = [(n1[0]+n2[0])/2,(n1[1]+n2[1])/2]
-                    # slope = -1/((n2[1]-n1[1])/(n2[0]-n1[0]))
-                    # b = m[1]- slope*m[0]
-                    # p = [m[0]-2,(m[0]-2)*slope+b]
-                    # v= np.subtract(m,p)
-                    # move =np.add(m,v/np.linalg.norm(v)*linespace)
-        return move
-
-
+                        return [move['X'], move['Y']]
+                return [0,0]
+            else: 
+                radius_neighbors = radius_neighbors[2:]
+                n1 = [my_neighbors.iloc[0]['X'],my_neighbors.iloc[0]['Y']]
+                n2 = [my_neighbors.iloc[1]['X'],my_neighbors.iloc[1]['Y']]
+                n3 = [my_neighbors.iloc[2]['X'],my_neighbors.iloc[2]['Y']]
+                possible_moves = pd.DataFrame(self.possible_moves(linespace, self.formation_num,n1, n1,n3), columns=['X', 'Y'])
+                possible_moves['dist'] = np.sqrt( (possible_moves.X)**2 + (possible_moves.Y)**2)
+                possible_moves = possible_moves.sort_values(['dist'],ascending =True)
+                while(len(possible_moves) >0 ):
+                    move = possible_moves.iloc[0]
+                    if(radius_neighbors.shape[0]>0):
+                        b = self.nearest(radius_neighbors, move)
+                        if(b.dist <= move.dist):
+                            return [move['X'], move['Y']]
+                        else: 
+                            possible_moves.iloc[1:]
+                            radius_neighbors.iloc[1:]
+                    else: 
+                        return [move['X'], move['Y']]
+                return [0,0]
 
 
     def move(self, neighbors, rel_pos):
@@ -583,35 +1078,16 @@ class Fish():
         Returns:
             np.array -- Move direction as a 2D vector
         """
-        # n = len(neighbors)
-        # # Get the centroid of the swarm
-        # centroid_pos = np.zeros((2,))
-
-        # if n < self.lim_neighbors[0]:
-        #     # Get the relative direction to the centroid of the swarm
-        #     centroid_pos = self.comp_center(rel_pos)
-        # elif n > self.lim_neighbors[1]:
-        #     # Get the inverse relative direction to centroid of the swarm
-        #     centroid_pos = -self.comp_center(rel_pos)
-        #     # Adjust length
-        #     magnitude = np.linalg.norm(centroid_pos)
-        #     centroid_pos /= magnitude**2
-        # print('target :',self.target_pos)
-        # move = self.target_pos + centroid_pos
-        
         # Cap the length of the move
-        r =20
-        fish_size =0.001
         linespace = 2
         if (self.formation_num == 0):
-            move = [0,0]#self.fibonacci_xline(rel_pos,linespace, r, fish_size)
+            move = self.trigonal_planar(rel_pos,linespace,self.orientation)
         elif (self.formation_num == 1):
             move = self.triangle_local(rel_pos,linespace,self.orientation)
         elif (self.formation_num == 2):
-            move = [0,0] #self.mapped_formation_move(rel_pos,len(neighbors),1,linespace)
+            move = self.mapped_formation_move(rel_pos,len(neighbors),0,linespace)
         elif (self.formation_num == 3):
-            move = [0,0] #self.triangle_local(rel_pos,linespace,self.orientation, 2)
-        
+            move = self.mapped_formation_move(rel_pos,len(neighbors),1, linespace)
        
         #self.orientation = np.linalg.norm(move)
         self.target_pos = np.nan_to_num(self.target_pos)

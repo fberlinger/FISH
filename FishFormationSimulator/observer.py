@@ -369,52 +369,9 @@ class Observer():
                 self.status[i].append(1)
             else:
                 self.status[i].append(0)
-        print("total_error", fish_total_error/self.num_nodes)
+        print("total_error", fish_total_error)
         self.total_error.append(fish_total_error)
         self.clock += 1
-
-    def animate_plot(self):
-        plt.ion()
-        fig = plt.figure(1)
-        ax = plt.axes(xlim=(0, 20), ylim=(0, 20))
-        ax.set_xlabel('x')
-        ax.set_ylabel('y')
-        N = self.num_nodes
-        fish = ax.plot( *([[], []]*N), marker=">",markersize =15,alpha = 1)
-        
-        def init():    
-            for line in fish:
-                line.set_data([4], [4])
-            return fish
-
-        def animate(i):
-            for j in range(N): 
-                fish[j].set_data(self.x[j][i],self.y[j][i])
-                fish[j].set_markersize(i)
-            return fish
-
-        anim = animation.FuncAnimation(fig, animate, init_func=init,
-                               frames=10, interval=100, blit=True)
-        plt.show()
-
-    def time_plot(self):
-        fig = plt.figure(2)
-        ax = plt.gca()
-        fish_over_time = []
-        for time in range(len(self.x[0])):
-            fish_x = []
-            fish_y = []
-            for i in range(self.num_nodes):
-                fish_x.append(self.x[i][time])
-                fish_y.append(self.y[i][time])
-            fish_over_time.append((fish_x, fish_y))
-        for xs, ys in fish_over_time:
-            plt.figure()
-            plt.scatter(xs, ys)
-        plt.show()
-       
-       
-
 
     def plot(
         self,
@@ -424,11 +381,8 @@ class Observer():
         show_bar_chart=False,
         no_star=False
     ):
-        
         """Plot the fish movement
         """
-
-        fig = plt.figure(2)
         ax = plt.gca()
 
         if self.is_instructed and not no_star:
@@ -446,13 +400,15 @@ class Observer():
             c = self.node_colors[i]
             if i != 0 and not i % 20 and dark:
                 c = [1.0, 1.0, 1.0, 1.0]
+
             plt.plot(
                 self.x[i],
                 self.y[i],
                 c=c,
-                linewidth=2.0,
+                linewidth=4.0,
                 alpha=0.66
             )
+
             if len(self.status[i]) < 100:
                 for j in range(1, len(self.status[i])-1):
                     face = c
@@ -489,7 +445,6 @@ class Observer():
                 s=50,
                 alpha=1
             )
-            plt.show()
 
         leg = []
         for i in range(self.num_nodes):
@@ -596,3 +551,4 @@ class Observer():
                     ax.title.set_color('white')
 
             plt.show()
+

@@ -249,7 +249,12 @@ def run_simulation(
         print('It\'s time to say bye bye!')
 
         observer.stop()
-        #observer.animate_plot()
+        # observer.plot(
+        #     dark=dark,
+        #     white_axis=white_axis,
+        #     no_legend=no_legend,
+        #     no_star=no_star
+        # )
     
 
     print('Please wait patiently {} seconds. Thanks.'.format(run_time))
