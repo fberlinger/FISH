@@ -6,3 +6,5 @@ You can learn the behavior of fish given an ideal model.
 
 - To see a learned replica, use the test_learned_fish notebook
 
+- In the aggregation, dispersion-success, and radii-vel folders are interesting results from prior experiments. The experiment.md file in each folder explains the conditions used to run trials in that folder.
+
