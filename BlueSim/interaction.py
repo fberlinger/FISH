@@ -89,7 +89,7 @@ class Interaction():
 
         return np.array([[math.cos(phi), math.sin(phi), 0], [-math.sin(phi), math.cos(phi), 0], [0, 0, 1]])
 
-    def blind_spot(self, source_id, neighbors, rel_pos, w_blindspot):
+    def blind_spot(self, source_id, neighbors, rel_pos, w_blindspot=50):
         """Omits neighbors within the blind spot behind own body.
 
         Args:
@@ -97,7 +97,6 @@ class Interaction():
             neighbors (set): Set of visible neighbors
             rel_pos (dict): Relative positions of neighbors
         """
-        no_neighbors_before = len(neighbors)
 
         r_blockage = w_blindspot/2
 
@@ -119,12 +118,7 @@ class Interaction():
                 if  math.cos(angle) * dist_neighbor < r_blockage:
                     neighbors.remove(neighbor)
 
-
-        no_neighbors_after = len(neighbors)
-        if source_id == 5:
-            print('fish #5 sees {} neighbors before blindspot and {} after in current iteration'.format(no_neighbors_before, no_neighbors_after))
-
-    def occlude(self, source_id, neighbors, rel_pos):
+    def occlude(self, source_id, neighbors, rel_pos, r_blocking=50):
         """Omits invisible neighbors occluded by others.
 
         Args:
@@ -138,7 +132,7 @@ class Interaction():
         def sortSecond(val):
             return val[1]
 
-        r_sphere = 50 # 50mm blocking sphere imposed by neighbors
+        r_sphere = r_blocking # 50mm blocking sphere imposed by neighbors
 
         n_by_dist = []
         for key, value in rel_pos.items():

@@ -23,6 +23,11 @@ interaction
 .. automodule:: interaction
    :members:
 
+dynamics
+========
+.. automodule:: dynamics
+   :members:
+
 channel
 =======
 .. automodule:: channel

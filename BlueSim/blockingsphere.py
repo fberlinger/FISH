@@ -716,13 +716,13 @@ class Fish():
             self.d_center = np.linalg.norm(self.comp_center(rel_pos)) # mean neighbor distance
 
             no_neighbors_before = len(neighbors)
-            self.interaction.blind_spot(self.id, neighbors, rel_pos, self.w_blindspot)
+            self.interaction.blind_spot(self.id, neighbors, rel_pos)
             no_neighbors_blind = len(neighbors)
-            self.interaction.occlude(self.id, neighbors, rel_pos)
+            self.interaction.occlude(self.id, neighbors, rel_pos, self.r_blocking)
             no_neighbors_blocking = len(neighbors)
             if self.id == 5:
-                print('fish #5 sees {} neighbors before blindspot and {} after in current iteration'.format(no_neighbors_before, no_neighbors_blind))
-                #print('fish #5 sees {} neighbors before blocking sphere and {} after in current iteration'.format(no_neighbors_blind, no_neighbors_blocking))
+                #print('fish #5 sees {} neighbors before blindspot and {} after in current iteration'.format(no_neighbors_before, no_neighbors_blind))
+                print('fish #5 sees {} neighbors before blocking sphere and {} after in current iteration'.format(no_neighbors_blind, no_neighbors_blocking))
             self.interaction.move(self.id, self.move(neighbors, rel_pos))
 
         # Update behavior based on status and information - update behavior

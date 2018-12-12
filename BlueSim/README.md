@@ -1,6 +1,6 @@
 # BlueSim
 
-Bla bla Project Explanation
+BlueSim is a realistic three dimensional simulator to test ideas for collective behaviors with BlueBots.
 
 ## Additional Requirement if Animations are Desired
 
