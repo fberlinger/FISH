@@ -12,15 +12,52 @@ from eventcodes import (
 
 
 class Fish():
-    """This class models each fish robot node in the network from the fish'
+    """This class models each fish robot node in the collective from the fish'
     perspective.
 
     Each fish has an ID, communicates over the channel, and perceives its
     neighbors and takes actions accordingly. In taking actions, the fish can
-    weight information from neighbors based on their distance. The fish aims to
-    stay between a lower and upper limit of neighbors to maintain a cohesive
-    collective. It can move at a maximal speed and updates its behavior on
-    every clock tick.
+    weight information from neighbors based on their distance. Different collective behaviors run different methods of this class. It can perceive and move according to its perceptual and dynamics model, and updates its behavior on every clock tick.
+
+    Attributes:
+        behavior (str): Behavior that fish follows
+        body_length (int): Length of a BlueBot (130mm)
+        caudal (int): Caudal fin control
+        channel (Class): Communication channel
+        clock (int): Local clock time
+        clock_freq (float): Clock speed (Hz)
+        clock_speed (float): Clock speed (s)
+        d_center (int): Relative distance to center of perceived neighbors
+        dorsal (int): Dorsal fin control
+        dynamics (Class): Fish dynamics model
+        fish_max_speed (int): Maximum forward speed of fish (old simulator)
+        hop_count (int): Hop count variable
+        hop_count_initiator (bool): Hop count started or not
+        hop_distance (int): Hop distance to other fish
+        id (int): ID number of fish
+        info (str): Some information
+        info_clock (int): Time stamp of the information, i.e., the clock
+        info_hops (int): Number of hops until the information arrived
+        initial_hop_count_clock (int): Hop count start time
+        interaction (Class): Class for interactions between fish
+        is_started (bool): True/false
+        last_hop_count_clock (TYPE): Time since last hop count
+        last_leader_election_clock (int): Time since last leader election
+        leader_election_max_id (int): Highest ID
+        lim_neighbors (int): Max. and min. desired number of neighbors
+        messages (list): Messages between fish
+        name (string): Name for logger file
+        neighbor_weight (float): Gain that influeces decision making
+        neighbors (set): Set of observed neighboring fish
+        pect_l (int): Pectoral left fin control
+        pect_r (int): Pectoral right fin control
+        queue (TYPE): Message queue for messages from neighbors
+        saw_hop_count (bool): True/false
+        status (str): Behavioral status
+        target_depth (int): Target depth for diving
+        target_dist (int): Target distance for orbiting
+        target_pos (int): Target position instructed by observer
+        verbose (bool): Print statements on/off
     """
 
     def __init__(
@@ -40,24 +77,23 @@ class Fish():
         """Create a new fish
 
         Arguments:
-            id {int} -- UUID.
-            channel {class} -- Communication channel.
-            interaction {class} -- Interactions which include perception of
-                neighbors and own movement.
-
-        Keyword Arguments:
-            lim_neighbors {int, int} -- Lower and upper limit of neighbors each
+            id (TYPE): UUID of fish
+            channel (Class): Communication channel
+            interaction (Class): Class for interactions between fish
+            dynamics (Class): Fish dynamics model
+            target_dist (int, optional): target_distance to neighbors
+            lim_neighbors (int, int): Lower and upper limit of neighbors each
                 fish aims to be connected to.
                 (default: {0, math.inf})
-            fish_max_speed {number} -- Max speed of each fish. Defines by how
+            fish_max_speed (float): Max speed of each fish. Defines by how
                 much it can change its position in one simulation step.
                 (default: {1})
-            clock_freq {number} -- Behavior update rate in Hertz (default: {1})
-            neighbor_weight {number} -- A weight based on distance that defines
+            clock_freq (number): Behavior update rate in Hertz (default: {1})
+            neighbor_weight (number): A weight based on distance that defines
                 how much each of a fish's neighbor affects its next move.
                 (default: {1.0})
-            name {str} -- Unique name of the fish. (default: {'Unnamed'})
-            verbose {bool} -- If `true` log out some stuff (default: {False})
+            name (str): Unique name of the fish. (default: {'Unnamed'})
+            verbose (bool): If `true` log out some stuff (default: {False})
         """
 
         self.id = id
@@ -76,7 +112,9 @@ class Fish():
         self.dorsal = 0
         self.pect_r = 0
         self.pect_l = 0
+        self.target_depth = 0
 
+        self.d_center = 0
         self.body_length = 130
         self.clock_speed = 1 / self.clock_freq
         self.clock = 0
@@ -86,6 +124,7 @@ class Fish():
         self.neighbors = set()
 
         self.status = None
+        self.behavior = 'home'
 
         self.info = None  # Some information
         self.info_clock = 0  # Time stamp of the information, i.e., the clock
@@ -101,7 +140,7 @@ class Fish():
 
         now = datetime.datetime.now()
 
-        # Stores messages to be send out at the end of the clock cycle
+        # Stores messages to be sent out at the end of the clock cycle
         self.messages = []
 
         # Logger instance
@@ -174,7 +213,7 @@ class Fish():
         """Handle move events, i.e., update the target position.
 
         Arguments:
-            event {Move} -- Event holding an x, y, and z target position
+            event (Move): Event holding an x, y, and z target position
         """
         self.target_pos[0] = event.x
         self.target_pos[1] = event.y
@@ -182,8 +221,6 @@ class Fish():
 
     def ping_handler(self, neighbors, rel_pos, event):
         """Handle ping events
-
-        Adds the
 
         Arguments:
             neighbors {set} -- Set of active neighbors, i.e., nodes from which
@@ -410,6 +447,15 @@ class Fish():
         return center
 
     def lj_force(self, neighbors, rel_pos):
+        """lj_force derives the Lennard-Jones potential and force based on the relative positions of all neighbors and the desired self.target_dist to neighbors. The force is a gain factor, attracting or repelling a fish from a neighbor. The center is a point in space toward which the fish will move, based on the sum of all weighted neighbor positions.
+
+        Args:
+            neighbors (set): Visible neighbors
+            rel_pos (dict): Relative positions of visible neighbors
+
+        Returns:
+            np.array: Weighted 3D direction based on visible neighbors
+        """
         if not neighbors:
             return np.zeros((3,))
 
@@ -433,6 +479,11 @@ class Fish():
         return center
 
     def depth_ctrl(self, r_move_g):
+        """Controls diving depth based on direction of desired move.
+
+        Args:
+            r_move_g (np.array): Relative position of desired goal location in robot frame.
+        """
         pitch = np.arctan2(r_move_g[2], math.sqrt(r_move_g[0]**2 + r_move_g[1]**2)) * 180 / math.pi
 
         if pitch > 1:
@@ -440,30 +491,123 @@ class Fish():
         elif pitch < -1:
             self.dorsal = 0
 
+    def depth_waltz(self, r_move_g):
+        """Controls diving depth in a pressure sensor fashion. Own depth is "measured", i.e. reveiled by the interaction. Depth control is then done based on a target depth coming from a desired goal location in the robot frame.
+
+        Args:
+            r_move_g (np.array): Relative position of desired goal location in robot frame.
+        """
+        depth = self.interaction.perceive_depth(self.id)
+
+        if self.target_depth == 0:
+            self.target_depth = depth + r_move_g[2] / 2
+
+        if depth > self.target_depth:
+            self.dorsal = 0
+        else:
+            self.dorsal = 1
+
     def home(self, r_move_g):
-        caudal_range = 20 # abs(heading) below which caudal fin is swithed on
+        """Homing behavior. Sets fin controls to move toward a desired goal location.
+
+        Args:
+            r_move_g (np.array): Relative position of desired goal location in robot frame.
+        """
+        caudal_range = 20 # abs(heading) below which caudal fin is switched on
 
         heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
 
         # target to the right
         if heading > 0:
-            self.pect_l = min(1, 0.2 + abs(heading) / 180)
+            self.pect_l = min(1, 0.6 + abs(heading) / 180)
             self.pect_r = 0
 
             if heading < caudal_range:
-                self.caudal = min(1, 0.2 + np.linalg.norm(r_move_g[0:2])/(5*self.body_length))
+                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
 
         # target to the left
         else:
-            self.pect_r = min(1, 0.2 + abs(heading) / 180)
+            self.pect_r = min(1, 0.6 + abs(heading) / 180)
             self.pect_l = 0
 
             if heading > -caudal_range:
-                self.caudal = min(1, 0.2 + np.linalg.norm(r_move_g[0:2])/(5*self.body_length))
+                self.caudal = min(0.2, 0.1 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
             else:
                 self.caudal = 0
+
+    def collisions(self, r_move_g):
+        """Local collision avoidance where r_move_g comes from a local Lennard-Jones potential.
+
+        Args:
+            r_move_g (np.array): Relative position of desired goal location in robot frame.
+        """
+        caudal_range = 20 # abs(heading) below which caudal fin is switched on
+
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        # target to the right
+        if heading > 0:
+            self.pect_l = min(1, 0.6 + abs(heading) / 180)
+
+            if heading < caudal_range:
+                self.caudal = min(self.caudal+0.5, self.caudal+0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+
+        # target to the left
+        else:
+            self.pect_r += min(1, 0.6 + abs(heading) / 180)
+
+            if heading > -caudal_range:
+                self.caudal = min(self.caudal+0.5, self.caudal+0.2 + np.linalg.norm(r_move_g[0:2])/(8*self.body_length))
+
+    def transition(self, r_move_g):
+        """Transitions between homing and orbiting. Uses pectoral right fin to align tangentially with the orbit.
+
+        Args:
+            r_move_g (np.array): Relative position of desired goal location in robot frame.
+        """
+        self.caudal = 0
+        self.pect_l = 0
+        self.pect_r = 1
+
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        if heading > 35:
+            self.pect_r = 0
+            self.behavior = 'orbit'
+
+    def orbit(self, r_move_g, target_dist):
+        """Orbits an object, e.g. two vertically stacked LEDs, at a predefined radius
+
+        Uses four zones to control the orbit with pectoral and caudal fins. The problem is reduced to 2D and depth control is handled separately.
+        Could make fin frequencies dependent on distance and heading, i.e., use proportianl control.
+
+        Args:
+            r_move_g (np.array): Relative position of desired goal location in robot frame.
+            target_dist (int): Target orbiting radius, [mm]
+        """
+        dist = np.linalg.norm(r_move_g[0:2]) # 2D, ignoring z
+        heading = np.arctan2(r_move_g[1], r_move_g[0]) * 180 / math.pi
+
+        if dist > target_dist:
+            if heading < 90:
+                self.caudal = 0.45
+                self.pect_l = 0
+                self.pect_r = 0
+            else:
+                self.caudal = 0.3
+                self.pect_l = 1
+                self.pect_r = 0
+        else:
+            if heading < 90:
+                self.caudal = 0.45
+                self.pect_l = 0
+                self.pect_r = 1
+            else:
+                self.caudal = 0.45
+                self.pect_l = 0
+                self.pect_r = 0
 
     def move(self, neighbors, rel_pos):
         """Make a cohesion and target-driven move
@@ -472,6 +616,8 @@ class Fish():
         target position and is limited by the maximum fish speed.
 
         Arguments:
+            neighbors (TYPE): Description
+            rel_pos (TYPE): Description
             neighbors {set} -- Set of active neighbors, i.e., other fish that
                 responded to the most recent ping event.
             rel_pos {dict} -- Relative positions to all neighbors
@@ -484,22 +630,45 @@ class Fish():
         centroid_pos = np.zeros((3,))
 
         # Get the relative direction to the centroid of the swarm
-        centroid_pos = self.lj_force(neighbors, rel_pos)
+        #centroid_pos = self.lj_force(neighbors, rel_pos)
+        #self.d_center = np.linalg.norm(self.comp_center(rel_pos))
 
-        move = self.target_pos + centroid_pos
+        move = self.target_pos# + centroid_pos
 
         # Global to Robot Transformation
         r_T_g = self.interaction.rot_global_to_robot(self.id)
         r_move_g = r_T_g @ move
 
+        #obstacle_avoidance = r_T_g @ centroid_pos
+
         # Simulate dynamics and restrict movement #xx
         self.depth_ctrl(r_move_g)
-        self.home(r_move_g)
+        #self.depth_waltz(r_move_g)
+        #self.home(r_move_g)
+
+        # Orbiting
+        #################################################
+        target_dist = 400
+
+        if self.behavior == 'home':
+            dist_filtered = np.linalg.norm(r_move_g)
+            if dist_filtered < target_dist * 1.2:
+                self.behavior = 'transition'
+            else:
+                self.home(r_move_g)
+        elif self.behavior == 'transition':
+            self.transition(r_move_g)
+        elif self.behavior == 'orbit':
+            self.orbit(r_move_g, target_dist)
+        # Orbiting
+        #################################################
+
+        #self.collisions(obstacle_avoidance)
 
         self.dynamics.update_ctrl(self.dorsal, self.caudal, self.pect_r, self.pect_l)
         final_move = self.dynamics.simulate_move(self.id)
 
-        # Cap the length of the move
+        # Cap the length of the move (OLD SIMULATOR)
         # magnitude = np.linalg.norm(move)
         # if magnitude > 0:
         #     direction = move / magnitude

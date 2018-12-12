@@ -22,7 +22,7 @@ sys.setrecursionlimit(1500)
 
 project = 'BlueSim'
 copyright = '2018, Florian Berlinger'
-author = 'Florian Berlinger & Fritz Lekschas'
+author = 'Florian Berlinger'
 
 # The short X.Y version
 version = ''
