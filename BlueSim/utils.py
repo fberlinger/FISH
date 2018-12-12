@@ -9,7 +9,7 @@ import threading
 from channel import Channel
 from environment import Environment
 from interaction import Interaction
-from blindspot import Fish #xx
+from fish import Fish
 from observer import Observer
 
 
